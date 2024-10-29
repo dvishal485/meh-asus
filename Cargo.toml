@@ -1,0 +1,9 @@
+[package]
+name = "meh-asus"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.91"
+snafu = "0.8.5"
+state-shift = "1.1.0"
