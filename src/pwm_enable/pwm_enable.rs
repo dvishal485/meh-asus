@@ -1,11 +1,12 @@
-use anyhow::Result;
-use std::{
-    ffi::OsString, fs::File, io::Read, num::ParseIntError, os::unix::fs::FileExt, path::Path,
-};
-use thiserror::Error;
-
+use super::error::PwmEnableError;
 use crate::fan::AsusNbWmiFanMode;
+use anyhow::Result;
 use state_shift::{states, type_state};
+use std::{ffi::OsString, fs::File, io::Read, os::unix::fs::FileExt, path::Path};
+
+const BASE_PATH: &str = "/sys/devices/platform/asus-nb-wmi/hwmon/";
+
+pub struct PwmEnableAbstraction {}
 
 #[type_state(state_slots = 1, default_state = ReadOnly)]
 pub struct PwmEnable {
@@ -14,27 +15,6 @@ pub struct PwmEnable {
     pub(crate) pwmid: u8,
 }
 
-const BASE_PATH: &str = "/sys/devices/platform/asus-nb-wmi/hwmon/";
-
-#[derive(Debug, Error)]
-pub enum PwmEnableError {
-    #[error("Failed to set fan to `{value}`. Unsupported value.")]
-    IllegalFanModeValue { value: AsusNbWmiFanMode },
-
-    #[error("Hardware is incompatible for `pwm{pwm_id}_enable`")]
-    UnsupportedHardware { pwm_id: u8 },
-
-    #[error("Label couldn't be accessed! {error}")]
-    LabelIncompatible { error: std::io::Error },
-
-    #[error("Error occured while reading the label! {error}")]
-    LabelReadError { error: std::io::Error },
-
-    #[error("Input couldn't be interpreted as a number! {parse_error}")]
-    NonNumericInputValue { parse_error: ParseIntError },
-}
-
-pub struct PwmEnableAbstraction {}
 impl PwmEnableAbstraction {
     pub fn get_read_only(pwm_id: u8, hwmon_id: u8) -> Result<PwmEnable<PwmEnableReadOnly>> {
         let path = format!("{BASE_PATH}/hwmon{hwmon_id}/pwm{pwm_id}_enable").into();
