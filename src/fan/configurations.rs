@@ -1,12 +1,12 @@
 // based on https://wiki.archlinux.org/title/Fan_speed_control
-use snafu::prelude::*;
+use thiserror::Error;
 
-#[derive(Debug, Snafu)]
+#[derive(Debug, Error)]
 pub enum AsusNbWmiFanModeError {
-    #[snafu(display("Unsupported fan mode `{}`, can only be `0`, `1`, or `2`. Refer https://wiki.archlinux.org/title/Fan_speed_control", value))]
+    #[error("Unsupported fan mode `{}`, can only be `0`, `1`, or `2`. Refer https://wiki.archlinux.org/title/Fan_speed_control", value)]
     InvalidFanMode { value: u8 },
 
-    #[snafu(display("Invalid numeric byte `{}`. Refer https://wiki.archlinux.org/title/Fan_speed_control", value))]
+    #[error("Invalid numeric byte `{}`. Refer https://wiki.archlinux.org/title/Fan_speed_control", value)]
     NonNumericByte { value: u8 },
 }
 
