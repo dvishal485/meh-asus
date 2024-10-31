@@ -27,7 +27,7 @@ impl std::fmt::Display for AsusNbWmiFanMode {
 impl TryFrom<u8> for AsusNbWmiFanMode {
     type Error = AsusNbWmiFanModeError;
 
-    fn try_from(value: u8) -> Result<AsusNbWmiFanMode, Self::Error> {
+    fn try_from(value: u8) -> Result<AsusNbWmiFanMode, AsusNbWmiFanModeError> {
         if value < b'0' || value > b'9' {
             Err(AsusNbWmiFanModeError::NonNumericByte { value })
         } else {
