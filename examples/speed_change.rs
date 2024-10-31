@@ -1,6 +1,8 @@
 use std::{thread::sleep, time::Duration};
 
-use meh_asus::pwm_enable::{error::PwmEnableError, AsusNbWmiFanMode, PwmEnableAbstraction};
+use meh_asus::fan::AsusNbWmiFanMode;
+use meh_asus::pwm_enable::error::PwmEnableError;
+use meh_asus::pwm_enable::{PwmEnable, PwmEnableReadOnly, PwmHardware, ReadConfig, WriteConfig};
 
 macro_rules! print_config {
     ($($x:expr),+ $(,)?) => {
@@ -10,14 +12,14 @@ macro_rules! print_config {
 }
 
 fn main() -> Result<(), PwmEnableError> {
-    let fan1 = PwmEnableAbstraction::find_and_get_read_only(1)?;
-    let fan2 = PwmEnableAbstraction::find_and_get_read_only(2)?;
+    let fan1: PwmEnable<PwmEnableReadOnly> = PwmEnable::find_and_get(1)?;
+    let fan2: PwmEnable<PwmEnableReadOnly> = PwmEnable::find_and_get(2)?;
 
     // (_, _)
     print_config!(fan1, fan2);
 
-    let mut fan1 = PwmEnableAbstraction::find_and_get_read_write(1)?;
-    let mut fan2 = PwmEnableAbstraction::find_and_get_read_write(2)?;
+    let mut fan1 = fan1.make_writable()?;
+    let mut fan2 = fan2.make_writable()?;
 
     // (_, _)
     print_config!(fan1, fan2);

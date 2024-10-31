@@ -1,32 +1,22 @@
-use super::error::{
+use super::{error::{
     FanModeReadError, FanModeSetError, InputReadError, LabelReadError, PwmEnableError,
-};
+}, traits::{PwmEnableState, PwmHardware, ReadConfig, WriteConfig}};
 use crate::fan::AsusNbWmiFanMode;
-use state_shift::{states, type_state};
-use std::{ffi::OsString, fs::File, io::Read, os::unix::fs::FileExt, path::Path};
+use std::{
+    ffi::OsString, fs::File, io::Read, marker::PhantomData, os::unix::fs::FileExt, path::Path,
+};
 
-const BASE_PATH: &str = "/sys/devices/platform/asus-nb-wmi/hwmon/";
+pub(crate) const BASE_PATH: &str = "/sys/devices/platform/asus-nb-wmi/hwmon/";
 
-pub struct PwmEnableAbstraction {}
-
-#[type_state(state_slots = 1, default_state = ReadOnly)]
-pub struct PwmEnable {
+pub struct PwmEnable<T: PwmEnableState> {
     pub(crate) file: File,
     pub(crate) path: OsString,
     pub(crate) pwmid: u8,
+    pub(crate) _state: PhantomData<T>,
 }
 
-impl PwmEnableAbstraction {
-    pub fn get_read_only(pwm_id: u8, hwmon_id: u8) -> Result<PwmEnable<PwmEnableReadOnly>, PwmEnableError> {
-        let path = format!("{BASE_PATH}/hwmon{hwmon_id}/pwm{pwm_id}_enable").into();
-        PwmEnable::new(path, pwm_id)
-    }
 
-    pub fn get_read_write(pwm_id: u8, hwmon_id: u8) -> Result<PwmEnable<PwmEnableReadWrite>, PwmEnableError> {
-        let path = format!("{BASE_PATH}/hwmon{hwmon_id}/pwm{pwm_id}_enable").into();
-        PwmEnable::mut_new(path, pwm_id)
-    }
-
+impl<T: PwmEnableState> PwmEnable<T> {
     pub fn find_hwmon_path(pwm_id: u8) -> Result<OsString, PwmEnableError> {
         let path = Path::new(BASE_PATH.into());
 
@@ -37,61 +27,13 @@ impl PwmEnableAbstraction {
             .map(|s| s.into_os_string())
             .ok_or(PwmEnableError::UnsupportedHardware { pwm_id })
     }
-
-    pub fn find_and_get_read_only(pwm_id: u8) -> Result<PwmEnable<PwmEnableReadOnly>, PwmEnableError> {
-        let path = Self::find_hwmon_path(pwm_id)?;
-        PwmEnable::new(path, pwm_id)
-    }
-
-    pub fn find_and_get_read_write(pwm_id: u8) -> Result<PwmEnable<PwmEnableReadWrite>, PwmEnableError> {
-        let path = Self::find_hwmon_path(pwm_id)?;
-        PwmEnable::mut_new(path, pwm_id)
-    }
 }
 
-#[states(ReadOnly, ReadWrite)]
-impl PwmEnable {
-    #[require(ReadOnly)]
-    #[switch_to(ReadOnly)]
-    pub fn new(path: OsString, pwmid: u8) -> Result<PwmEnable, PwmEnableError> {
-        let file = File::options()
-            .read(true)
-            .write(false)
-            .open(Path::new(&path))
-            .map_err(|e| PwmEnableError::UnableToAccessHardware {
-                pwm_id: pwmid,
-                error: e,
-            })?;
-        Ok(PwmEnable { file, path, pwmid })
-    }
+pub struct PwmEnableReadWrite;
+pub struct PwmEnableReadOnly;
 
-    #[require(ReadWrite)]
-    #[switch_to(ReadWrite)]
-    pub fn mut_new(path: OsString, pwmid: u8) -> Result<PwmEnable, PwmEnableError> {
-        let file = File::options()
-            .read(true)
-            .write(true)
-            .open(Path::new(&path))
-            .map_err(|e| PwmEnableError::UnableToAccessHardware {
-                pwm_id: pwmid,
-                error: e,
-            })?;
-        Ok(PwmEnable { file, path, pwmid })
-    }
-
-    #[require(A)]
-    pub fn get_fan_mode(&self) -> Result<AsusNbWmiFanMode, FanModeReadError> {
-        let mut profile: [u8; 1] = [0];
-        self.file
-            .read_exact_at(&mut profile, 0)
-            .map_err(|e| FanModeReadError::IOReadError { error: e })?;
-
-        AsusNbWmiFanMode::try_from(profile[0])
-            .map_err(|e| FanModeReadError::AsusNbWmiFanModeError { error: e })
-    }
-
-    #[require(ReadWrite)]
-    pub fn set_fan_mode(&mut self, mode: AsusNbWmiFanMode) -> Result<(), FanModeSetError> {
+impl WriteConfig for PwmEnable<PwmEnableReadWrite> {
+    fn set_fan_mode(&mut self, mode: AsusNbWmiFanMode) -> Result<(), FanModeSetError> {
         let Err(e) = self.file.write_all_at(&[mode as u8], 0) else {
             return Ok(());
         };
@@ -108,10 +50,29 @@ impl PwmEnable {
             _ => FanModeSetError::UnknownError { error: e.into() },
         })
     }
+}
 
-    #[require(ReadOnly)]
-    #[switch_to(ReadWrite)]
-    pub fn make_writable(self) -> Result<PwmEnable, PwmEnableError> {
+impl<T: PwmEnableState> PwmHardware for PwmEnable<T> {
+    fn new(path: OsString, pwmid: u8) -> Result<Self, PwmEnableError> {
+        let file = File::options()
+            .read(true)
+            .write(T::write_permission())
+            .open(Path::new(&path))
+            .map_err(|e| PwmEnableError::UnableToAccessHardware {
+                pwm_id: pwmid,
+                error: e,
+            })?;
+        Ok(PwmEnable {
+            file,
+            path,
+            pwmid,
+            _state: PhantomData,
+        })
+    }
+}
+
+impl PwmEnable<PwmEnableReadOnly> {
+    pub fn make_writable(self) -> Result<PwmEnable<PwmEnableReadWrite>, PwmEnableError> {
         let file = File::options()
             .read(true)
             .write(true)
@@ -122,11 +83,23 @@ impl PwmEnable {
             file,
             path: self.path,
             pwmid: self.pwmid,
+            _state: PhantomData,
         })
     }
+}
 
-    #[require(A)]
-    pub fn get_label(&self) -> Result<String, LabelReadError> {
+impl<T: PwmEnableState> ReadConfig for PwmEnable<T> {
+    fn get_fan_mode(&self) -> Result<AsusNbWmiFanMode, FanModeReadError> {
+        let mut profile: [u8; 1] = [0];
+        self.file
+            .read_exact_at(&mut profile, 0)
+            .map_err(|e| FanModeReadError::IOReadError { error: e })?;
+
+        AsusNbWmiFanMode::try_from(profile[0])
+            .map_err(|e| FanModeReadError::AsusNbWmiFanModeError { error: e })
+    }
+
+    fn get_label(&self) -> Result<String, LabelReadError> {
         let path = Path::new(&self.path);
         let label_path = path.with_file_name(format!("fan{}_label", self.pwmid));
 
@@ -147,8 +120,7 @@ impl PwmEnable {
         Ok(buf)
     }
 
-    #[require(A)]
-    pub fn get_input(&self) -> Result<u16, InputReadError> {
+    fn get_input(&self) -> Result<u16, InputReadError> {
         let path = Path::new(&self.path);
         let input_path = path.with_file_name(format!("fan{}_input", self.pwmid));
 
