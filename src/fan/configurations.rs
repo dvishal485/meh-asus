@@ -1,4 +1,4 @@
-// based on https://wiki.archlinux.org/title/Fan_speed_control
+// based on https://wiki.archlinux.org/title/Fan_speed_control#ASUS_laptops
 use thiserror::Error;
 
 #[derive(Debug, Error)]
