@@ -6,3 +6,7 @@ edition = "2021"
 [dependencies]
 state-shift = "1.1.0"
 thiserror = "1.0.65"
+
+[dev-dependencies]
+libc = { version = "0.2.161" }
+notify-rust = { version = "4.11.3" }
