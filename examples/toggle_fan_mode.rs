@@ -68,13 +68,17 @@ fn main() -> Result<(), Error> {
         let fan1_config = get_config(&fan1).context("Error reading fan1 config")?;
         let fan2_config = get_config(&fan2).context("Error reading fan2 config")?;
 
+        let message = format!(
+            "{}\n{}\nPlease run this program as root to control the fans.",
+            fan1_config, fan2_config
+        );
+
+        eprintln!("{}", message);
+
         Notification::new()
             .appname("ASUS Fan Control")
             .summary("Fan control error")
-            .body(&format!(
-                "{}\n{}\nPlease run this program as root to control the fans.",
-                fan1_config, fan2_config
-            ))
+            .body(&message)
             .show()
             .context("Notification could not be delivered")?;
     } else {
@@ -84,10 +88,12 @@ fn main() -> Result<(), Error> {
             .context("fan2 hardware not found or failed to open config")?;
 
         let fan1_config = get_config(&fan1).expect("Error reading fan1 config");
-        let fan2_config = get_config(&fan2).expect("Error reading fan1 config");
 
         // lets sync both fans to same mode
         let next_mode = get_next_mode(&fan1_config);
+
+        let fan1_config = get_config(&fan1).expect("Error reading fan1 config");
+        let fan2_config = get_config(&fan2).expect("Error reading fan1 config");
 
         fan1.set_fan_mode(next_mode)
             .context("Failed to switch to next fan mode")?;
