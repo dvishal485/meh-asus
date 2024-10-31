@@ -2,7 +2,8 @@ use std::{thread::sleep, time::Duration};
 
 use meh_asus::fan::AsusNbWmiFanMode;
 use meh_asus::pwm_enable::error::PwmEnableError;
-use meh_asus::pwm_enable::{PwmEnable, PwmEnableReadOnly, PwmHardware, ReadConfig, WriteConfig};
+use meh_asus::pwm_enable::traits::{PwmHardware, ReadConfig, WriteConfig};
+use meh_asus::pwm_enable::{PwmEnable, PwmEnableReadOnly};
 
 macro_rules! print_config {
     ($($x:expr),+ $(,)?) => {

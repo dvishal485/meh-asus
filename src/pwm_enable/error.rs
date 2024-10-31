@@ -1,6 +1,6 @@
 use crate::fan::AsusNbWmiFanModeError;
 
-use super::AsusNbWmiFanMode;
+use crate::fan::AsusNbWmiFanMode;
 use std::num::ParseIntError;
 use thiserror::Error;
 

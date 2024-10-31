@@ -1,12 +1,15 @@
-use super::{error::{
-    FanModeReadError, FanModeSetError, InputReadError, LabelReadError, PwmEnableError,
-}, traits::{PwmEnableState, PwmHardware, ReadConfig, WriteConfig}};
+use super::{
+    base_path::BASE_PATH,
+    error::{FanModeReadError, FanModeSetError, InputReadError, LabelReadError, PwmEnableError},
+    traits::{PwmEnableState, PwmHardware, ReadConfig, WriteConfig},
+};
 use crate::fan::AsusNbWmiFanMode;
 use std::{
     ffi::OsString, fs::File, io::Read, marker::PhantomData, os::unix::fs::FileExt, path::Path,
 };
 
-pub(crate) const BASE_PATH: &str = "/sys/devices/platform/asus-nb-wmi/hwmon/";
+pub struct PwmEnableReadWrite;
+pub struct PwmEnableReadOnly;
 
 pub struct PwmEnable<T: PwmEnableState> {
     pub(crate) file: File,
@@ -15,44 +18,7 @@ pub struct PwmEnable<T: PwmEnableState> {
     pub(crate) _state: PhantomData<T>,
 }
 
-
-impl<T: PwmEnableState> PwmEnable<T> {
-    pub fn find_hwmon_path(pwm_id: u8) -> Result<OsString, PwmEnableError> {
-        let path = Path::new(BASE_PATH.into());
-
-        (0..=9_u8)
-            .map(|hwmon_id| path.join(format!("hwmon{hwmon_id}/pwm{pwm_id}_enable")))
-            // .inspect(|f| eprintln!("Looking for {f:?}"))
-            .find(|path| (path.try_exists()).ok().is_some_and(|s| s))
-            .map(|s| s.into_os_string())
-            .ok_or(PwmEnableError::UnsupportedHardware { pwm_id })
-    }
-}
-
-pub struct PwmEnableReadWrite;
-pub struct PwmEnableReadOnly;
-
-impl WriteConfig for PwmEnable<PwmEnableReadWrite> {
-    fn set_fan_mode(&mut self, mode: AsusNbWmiFanMode) -> Result<(), FanModeSetError> {
-        let Err(e) = self.file.write_all_at(&[mode as u8], 0) else {
-            return Ok(());
-        };
-
-        let raw_err = e.raw_os_error();
-
-        let Some(err) = raw_err else {
-            return Err(FanModeSetError::UnknownError { error: e.into() });
-        };
-
-        Err(match err {
-            22 => FanModeSetError::IllegalFanModeValue { value: mode },
-            5 => FanModeSetError::AcPowerRequired { error: e.into() },
-            _ => FanModeSetError::UnknownError { error: e.into() },
-        })
-    }
-}
-
-impl<T: PwmEnableState> PwmHardware for PwmEnable<T> {
+impl<T: PwmEnableState> PwmHardware<T> for PwmEnable<T> {
     fn new(path: OsString, pwmid: u8) -> Result<Self, PwmEnableError> {
         let file = File::options()
             .read(true)
@@ -71,20 +37,16 @@ impl<T: PwmEnableState> PwmHardware for PwmEnable<T> {
     }
 }
 
-impl PwmEnable<PwmEnableReadOnly> {
-    pub fn make_writable(self) -> Result<PwmEnable<PwmEnableReadWrite>, PwmEnableError> {
-        let file = File::options()
-            .read(true)
-            .write(true)
-            .open(&self.path)
-            .map_err(|e| PwmEnableError::IOError { error: e })?;
+impl<T: PwmEnableState> PwmEnable<T> {
+    pub fn find_hwmon_path(pwm_id: u8) -> Result<OsString, PwmEnableError> {
+        let path = Path::new(BASE_PATH.into());
 
-        Ok(PwmEnable {
-            file,
-            path: self.path,
-            pwmid: self.pwmid,
-            _state: PhantomData,
-        })
+        (0..=9_u8)
+            .map(|hwmon_id| path.join(format!("hwmon{hwmon_id}/pwm{pwm_id}_enable")))
+            // .inspect(|f| eprintln!("Looking for {f:?}"))
+            .find(|path| (path.try_exists()).ok().is_some_and(|s| s))
+            .map(|s| s.into_os_string())
+            .ok_or(PwmEnableError::UnsupportedHardware { pwm_id })
     }
 }
 
@@ -142,5 +104,42 @@ impl<T: PwmEnableState> ReadConfig for PwmEnable<T> {
             .map_err(|e| (InputReadError::NonNumericInputValue { parse_error: e }))?;
 
         Ok(input)
+    }
+}
+
+impl PwmEnable<PwmEnableReadOnly> {
+    pub fn make_writable(self) -> Result<PwmEnable<PwmEnableReadWrite>, PwmEnableError> {
+        let file = File::options()
+            .read(true)
+            .write(true)
+            .open(&self.path)
+            .map_err(|e| PwmEnableError::IOError { error: e })?;
+
+        Ok(PwmEnable {
+            file,
+            path: self.path,
+            pwmid: self.pwmid,
+            _state: PhantomData,
+        })
+    }
+}
+
+impl WriteConfig for PwmEnable<PwmEnableReadWrite> {
+    fn set_fan_mode(&mut self, mode: AsusNbWmiFanMode) -> Result<(), FanModeSetError> {
+        let Err(e) = self.file.write_all_at(&[mode as u8], 0) else {
+            return Ok(());
+        };
+
+        let raw_err = e.raw_os_error();
+
+        let Some(err) = raw_err else {
+            return Err(FanModeSetError::UnknownError { error: e.into() });
+        };
+
+        Err(match err {
+            22 => FanModeSetError::IllegalFanModeValue { value: mode },
+            5 => FanModeSetError::AcPowerRequired { error: e.into() },
+            _ => FanModeSetError::UnknownError { error: e.into() },
+        })
     }
 }
