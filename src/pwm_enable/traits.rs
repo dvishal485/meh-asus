@@ -36,6 +36,11 @@ pub trait PwmHardware<T: PwmEnableState> {
         let path = format!("{BASE_PATH}/hwmon{hwmon_id}/pwm{pwm_id}_enable").into();
         Self::new(path, pwm_id)
     }
+
+    fn get_pwm_id(&self) -> u8;
+    fn get_file_path(&self) -> &std::ffi::OsString;
+    fn get_file(&self) -> &std::fs::File;
+
 }
 
 pub trait PwmEnableState {

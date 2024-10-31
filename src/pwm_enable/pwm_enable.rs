@@ -35,6 +35,19 @@ impl<T: PwmEnableState> PwmHardware<T> for PwmEnable<T> {
             _state: PhantomData,
         })
     }
+    
+    fn get_pwm_id(&self) -> u8 {
+        self.pwmid
+    }
+    
+    fn get_file_path(&self) -> &OsString {
+        &self.path
+    }
+    
+    fn get_file(&self) -> &File {
+        &self.file
+    }
+    
 }
 
 impl<T: PwmEnableState> PwmEnable<T> {
