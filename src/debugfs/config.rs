@@ -2,12 +2,12 @@ use super::{config_trait::Config, error::HardwareError};
 use std::{fs, marker::PhantomData};
 
 #[derive(Debug, Clone, Copy)]
-pub struct Hardware<T>
+pub struct Hardware<State>
 where
-    T: Config + Copy,
+    State: Config + Copy,
 {
     pub(crate) dev_id: u64,
-    pub(crate) states_type: PhantomData<T>,
+    pub(crate) states_type: PhantomData<State>,
 }
 
 macro_rules! path {
@@ -16,9 +16,9 @@ macro_rules! path {
     };
 }
 
-impl<T> Hardware<T>
+impl<State> Hardware<State>
 where
-    T: Config + Copy,
+    State: Config + Copy,
 {
     pub fn new(dev_id: u64) -> Self {
         Hardware {
@@ -27,14 +27,14 @@ where
         }
     }
 
-    fn open(&self) -> Result<(), HardwareError<T>> {
+    fn open(&self) -> Result<(), HardwareError<State>> {
         fs::write(path!("dev_id"), self.dev_id.to_string())
             .map_err(|error| HardwareError::DevIdWriteFailed { error })?;
 
         Ok(())
     }
 
-    pub fn apply(&self, ctrl_param: T) -> Result<(), HardwareError<T>> {
+    pub fn apply(&self, ctrl_param: State) -> Result<(), HardwareError<State>> {
         self.open()?;
 
         fs::write(path!("ctrl_param"), ctrl_param.to_config())
@@ -45,7 +45,7 @@ where
         Ok(())
     }
 
-    pub fn read(&self) -> Result<Result<T, T>, HardwareError<T>> {
+    pub fn read(&self) -> Result<Result<State, State>, HardwareError<State>> {
         self.open()?;
 
         let devs = fs::read_to_string(path!("devs"))
@@ -83,7 +83,7 @@ where
         // if no dev_id is inferred, we can only pray to god that it is the correct value.
         let value = value?;
         let value =
-            T::try_from(value).map_err(|_| HardwareError::NotPossibleState { value: value })?;
+            State::try_from(value).map_err(|_| HardwareError::NotPossibleState { value: value })?;
 
         Ok(if let Some(inferred_dev_id) = inferred_dev_id {
             if inferred_dev_id != self.dev_id {

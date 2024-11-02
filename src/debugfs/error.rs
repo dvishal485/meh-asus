@@ -5,9 +5,9 @@ use thiserror::Error;
 use super::{config::Hardware, config_trait::Config};
 
 #[derive(Debug, Error)]
-pub enum HardwareError<T>
+pub enum HardwareError<State>
 where
-    T: Config + Copy,
+    State: Config + Copy,
 {
     #[error("Failed to write dev_id! {error}")]
     DevIdWriteFailed { error: std::io::Error },
@@ -21,7 +21,7 @@ where
     #[error("Cannot read the config due to unexpected format!\nExpected: `DEVS({}, {{some_value}}) = {{some_value}}\nFound: {value}", hardware.dev_id)]
     UnexpectedConfigFormat {
         value: String,
-        hardware: Hardware<T>,
+        hardware: Hardware<State>,
     },
 
     #[error("The given string `{value}` cannot be interpreted as hexadecimal value! {error}")]
