@@ -63,7 +63,7 @@ where
                             .and_then(|d| u64::from_str_radix(d, 16).ok()),
                         {
                             let value = value.trim().strip_suffix(')').unwrap();
-                            let value = dbg!(value.strip_prefix("0x").or(Some(value)).unwrap());
+                            let value = value.strip_prefix("0x").or(Some(value)).unwrap();
                             u64::from_str_radix(value, 16).map_err(|e| {
                                 HardwareError::InvalidHexadecimalValue {
                                     value: value.to_string(),
