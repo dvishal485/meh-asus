@@ -75,9 +75,8 @@ where
     /// Reads the currect state by overwriting config file to understand the current state.
     /// Hence it effectively reads, writes and resets again the DSTS file to determine the state.
     ///
-    /// The accuracy comes at cost of performance, as it writes to the config file. There is a proper
-    /// way to read the state without writing to the config file and can be done by obtaining the
-    /// mask generated using maps given in the
+    /// The mask required to read the state is generated on first run,
+    /// though can be mapped using data given in the
     /// [asus-wmi driver code](https://github.com/torvalds/linux/blob/3e5e6c9900c3d71895e8bdeacfb579462e98eba1/include/linux/platform_data/x86/asus-wmi.h#L150-L158).
     ///
     /// Relates to [read_stale](Hardware::read_stale) function which is not reliable.
@@ -102,6 +101,25 @@ where
         State::try_from(current_state_u8).map_err(|_| HardwareError::NotPossibleState {
             value: current_state_u8,
         })
+    }
+
+    /// Read the mask set for the hardware. **(Reliable)**
+    /// 
+    /// This is not really required, but yet supplied for cases when mutable reference cannot be shared but mask is already set.
+    /// This method can be removed overall by use of RefCell or Cell, but it will hinder with the Copy trait. (derive macro)
+    ///
+    /// Takes read only reference to the hardware, can only be used after the first read with [Hardware::read](Hardware::read).
+    pub fn read_ref(&self) -> Result<State, HardwareError<State>> {
+        self.safe_read_mask
+            .ok_or(HardwareError::<State>::UsedWithoutMaskSet)
+            .and_then(|mask| {
+                self.read_dsts().and_then(|raw| {
+                    let s = raw ^ mask;
+                    State::try_from(s).map_err(|_| HardwareError::NotPossibleState {
+                        value: s,
+                    })
+                })
+            })
     }
 
     /// Read the raw value of the hardware config. This value is the actual state of the hardware,
@@ -164,6 +182,8 @@ where
     }
 
     /// Read the current state of the hardware. **(NOT RELIABALE)**
+    ///
+    /// Use [read](Hardware::read) instead.
     ///
     /// This function is not reliable, as it reports any value that is present in the config file.
     /// It may not be the actual state of the hardware.

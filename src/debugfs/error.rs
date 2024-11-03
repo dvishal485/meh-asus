@@ -39,4 +39,7 @@ where
         value: String,
         hardware: Hardware<State>,
     },
+
+    #[error("Mask is not set. Cannot read the config without mask!\nYou might want to call `Hardware::read` first with mutable reference to self to set the mask.")]
+    UsedWithoutMaskSet 
 }
