@@ -1,5 +1,5 @@
 use super::{config_trait::Config, error::HardwareError};
-use std::{fmt::Debug, fs, marker::PhantomData};
+use std::{fs, marker::PhantomData};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Hardware<State>
@@ -8,6 +8,7 @@ where
 {
     pub(crate) dev_id: u64,
     pub(crate) states_type: PhantomData<State>,
+    pub(crate) safe_read_mask: Option<u64>,
 }
 
 macro_rules! path {
@@ -28,6 +29,7 @@ where
         Hardware {
             dev_id,
             states_type: PhantomData,
+            safe_read_mask: None,
         }
     }
 
@@ -71,7 +73,7 @@ where
     /// Read the current state of the hardware. **(Reliable)**
     ///
     /// Reads the currect state by overwriting config file to understand the current state.
-    /// Hence it effectively reads, writes and reads again the DSTS file to determine the state.
+    /// Hence it effectively reads, writes and resets again the DSTS file to determine the state.
     ///
     /// The accuracy comes at cost of performance, as it writes to the config file. There is a proper
     /// way to read the state without writing to the config file and can be done by obtaining the
@@ -79,8 +81,27 @@ where
     /// [asus-wmi driver code](https://github.com/torvalds/linux/blob/3e5e6c9900c3d71895e8bdeacfb579462e98eba1/include/linux/platform_data/x86/asus-wmi.h#L150-L158).
     ///
     /// Relates to [read_stale](Hardware::read_stale) function which is not reliable.
-    pub fn read(&self) -> Result<State, HardwareError<State>> {
-        todo!()
+    pub fn read(&mut self) -> Result<State, HardwareError<State>> {
+        let current_raw_state = self.read_dsts()?;
+
+        let mask = if let Some(mask) = self.safe_read_mask {
+            mask
+        } else {
+            unsafe { self.apply_any(0_u64) }?;
+            let mask = self.read_dsts()?;
+            self.safe_read_mask = Some(mask);
+
+            // revert back to the original state
+            unsafe { self.apply_any(current_raw_state ^ mask) }?;
+
+            mask
+        };
+
+        let current_state_u8 = current_raw_state ^ mask;
+
+        State::try_from(current_state_u8).map_err(|_| HardwareError::NotPossibleState {
+            value: current_state_u8,
+        })
     }
 
     /// Read the raw value of the hardware config. This value is the actual state of the hardware,
@@ -93,7 +114,7 @@ where
     /// **Usecase:** If you want to read the raw value of the hardware config, and then map it to the state yourself.
     pub fn read_dsts(&self) -> Result<u64, HardwareError<State>> {
         self.open()?;
-        
+
         let config = fs::read_to_string(path!("dsts"))
             .map_err(|e| HardwareError::DstsFileStateReadFailed { error: e })?;
 
@@ -132,7 +153,7 @@ where
 
         if let Some(inferred_dev_id) = inferred_dev_id {
             if inferred_dev_id != self.dev_id {
-                return Err(HardwareError::UnexpectedConfigDstsFormat  {
+                return Err(HardwareError::UnexpectedConfigDstsFormat {
                     value: config,
                     hardware: *self,
                 });

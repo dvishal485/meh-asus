@@ -7,6 +7,7 @@ pub const DEV_ID: u64 = 0x60079;
 pub const CAMERA_LED: Hardware<CameraLedState> = Hardware {
     dev_id: DEV_ID,
     states_type: PhantomData,
+    safe_read_mask: None,
 };
 
 #[derive(Debug, Clone, Copy)]

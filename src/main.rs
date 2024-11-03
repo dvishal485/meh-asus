@@ -1,43 +1,43 @@
 mod debugfs;
 use std::{thread::sleep, time::Duration};
 
-use debugfs::common_hardware::camera_led::{CAMERA_LED, CameraLedState};
-use debugfs::common_hardware::fan::{FAN,FanMode};
+use debugfs::common_hardware::camera_led::{CameraLedState, CAMERA_LED};
+use debugfs::common_hardware::fan::{FanMode, FAN};
 
 fn main() {
-    let camera_led = CAMERA_LED;
+    let mut camera_led = CAMERA_LED;
 
-    let value = camera_led.read_dsts();
-    println!("DSTS {:?}\n", value);
-
-    camera_led.apply(CameraLedState::On).unwrap();
-
-    let value = camera_led.read_stale();
+    println!("Current state of camera_led");
+    let value = camera_led.read();
     println!("{:?}\n", value);
 
-    let value = camera_led.read_dsts();
-    println!("DSTS {:?}\n", value);
+    sleep(Duration::from_secs(5));
+    
+    println!("Applying On state to camera_led");
+    camera_led.apply(CameraLedState::On).unwrap();
+
+    let value = camera_led.read();
+    println!("{:?}\n", value);
 
     sleep(Duration::from_secs(5));
 
+    println!("Applying Off state to camera_led");
     camera_led.apply(CameraLedState::Off).unwrap();
 
-    let value = camera_led.read_stale();
+    let value = camera_led.read();
     println!("{:?}\n", value);
 
-    let value = camera_led.read_dsts();
-    println!("DSTS {:?}\n", value);
+    let mut fan = FAN;
 
-    let fan = FAN ;
+    println!("Current state of fan");
+    let value = fan.read();
+    println!("{:?}\n", value);
 
-    let value = fan.read_dsts();
-    println!("DSTS {:?}\n", value);
+    sleep(Duration::from_secs(5));
 
+    println!("Applying Performace state to fan");
     fan.apply(FanMode::Performace).unwrap();
 
-    let value = fan.read_dsts();
-    println!("DSTS {:?}\n", value);
-
-    let value = fan.read_stale();
+    let value = fan.read();
     println!("{:?}\n", value);
 }
