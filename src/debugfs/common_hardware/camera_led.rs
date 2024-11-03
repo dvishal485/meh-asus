@@ -1,14 +1,8 @@
-use std::marker::PhantomData;
-
 use crate::debugfs::{config::Hardware, config_trait::Config, error::HardwareError};
 
 pub const DEV_ID: u64 = 0x60079;
 
-pub const CAMERA_LED: Hardware<CameraLedState> = Hardware {
-    dev_id: DEV_ID,
-    states_type: PhantomData,
-    safe_read_mask: None,
-};
+pub const CAMERA_LED: Hardware<CameraLedState> = Hardware::new(DEV_ID);
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
@@ -16,6 +10,7 @@ pub enum CameraLedState {
     Off = 0,
     On = 1,
 }
+
 impl TryFrom<u64> for CameraLedState {
     type Error = HardwareError;
 

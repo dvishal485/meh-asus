@@ -22,7 +22,7 @@ fn main() -> Result<(), Error> {
         return Ok(());
     }
 
-    let mut camera_led = CAMERA_LED;
+    let camera_led = CAMERA_LED;
     let curr_state = camera_led.read()?;
 
     match curr_state {
@@ -65,6 +65,6 @@ fn main() -> Result<(), Error> {
         }
     }
 
-    println!("Camera LED status: {:?}", camera_led.read_ref());
+    println!("Camera LED status: {:?}", camera_led.read());
     Ok(())
 }

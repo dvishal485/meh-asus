@@ -1,14 +1,8 @@
-use std::marker::PhantomData;
-
 use crate::debugfs::{config::Hardware, config_trait::Config, error::HardwareError};
 
 pub const DEV_ID: u64 = 0x110019;
 
-pub const FAN: Hardware<FanMode> = Hardware {
-    dev_id: DEV_ID,
-    states_type: PhantomData,
-    safe_read_mask: None,
-};
+pub const FAN: Hardware<FanMode> = Hardware::new(DEV_ID);
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]

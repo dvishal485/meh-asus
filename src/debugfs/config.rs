@@ -1,5 +1,5 @@
 use super::{config_trait::Config, error::HardwareError};
-use std::{fs, marker::PhantomData};
+use std::{cell::Cell, fs, marker::PhantomData};
 
 #[derive(Debug, Clone)]
 pub struct Hardware<State>
@@ -8,7 +8,7 @@ where
 {
     pub(crate) dev_id: u64,
     pub(crate) states_type: PhantomData<State>,
-    pub(crate) safe_read_mask: Option<u64>,
+    pub(crate) safe_read_mask: Cell<Option<u64>>,
 }
 
 macro_rules! path {
@@ -25,11 +25,11 @@ where
     ///
     /// It is just a wrapper to store value and its corresponding
     /// allowed states. Doesn't open the hardware config files.
-    pub fn new(dev_id: u64) -> Self {
+    pub const fn new(dev_id: u64) -> Self {
         Hardware {
             dev_id,
             states_type: PhantomData,
-            safe_read_mask: None,
+            safe_read_mask: Cell::new(None),
         }
     }
 
@@ -80,15 +80,15 @@ where
     /// [asus-wmi driver code](https://github.com/torvalds/linux/blob/3e5e6c9900c3d71895e8bdeacfb579462e98eba1/include/linux/platform_data/x86/asus-wmi.h#L150-L158).
     ///
     /// Relates to [read_stale](Hardware::read_stale) function which is not reliable.
-    pub fn read(&mut self) -> Result<State, HardwareError> {
+    pub fn read(&self) -> Result<State, HardwareError> {
         let current_raw_state = self.read_dsts()?;
 
-        let mask = if let Some(mask) = self.safe_read_mask {
+        let mask = if let Some(mask) = self.safe_read_mask.get() {
             mask
         } else {
             unsafe { self.apply_any(0_u64) }?;
             let mask = self.read_dsts()?;
-            self.safe_read_mask = Some(mask);
+            self.safe_read_mask.set(Some(mask));
 
             // revert back to the original state
             unsafe { self.apply_any(current_raw_state ^ mask) }?;
@@ -101,23 +101,6 @@ where
         State::try_from(current_state_u8).map_err(|_| HardwareError::NotPossibleState {
             value: current_state_u8,
         })
-    }
-
-    /// Read the mask set for the hardware. **(Reliable)**
-    ///
-    /// This is not really required, but yet supplied for cases when mutable reference cannot be shared but mask is already set.
-    /// This method can be removed overall by use of RefCell or Cell, but it will hinder with the Copy trait. (derive macro)
-    ///
-    /// Takes read only reference to the hardware, can only be used after the first read with [Hardware::read](Hardware::read).
-    pub fn read_ref(&self) -> Result<State, HardwareError> {
-        self.safe_read_mask
-            .ok_or(HardwareError::UsedWithoutMaskSet)
-            .and_then(|mask| {
-                self.read_dsts().and_then(|raw| {
-                    let s = raw ^ mask;
-                    State::try_from(s).map_err(|_| HardwareError::NotPossibleState { value: s })
-                })
-            })
     }
 
     /// Read the raw value of the hardware config. This value is the actual state of the hardware,
