@@ -10,3 +10,8 @@ thiserror = "1.0.67"
 anyhow = "1.0.92"
 libc = { version = "0.2.161" }
 notify-rust = { version = "4.11.3" }
+
+
+[features]
+default = ["common-hardware"]
+common-hardware = []

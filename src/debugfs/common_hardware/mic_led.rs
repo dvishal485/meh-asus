@@ -1,8 +1,7 @@
-use super::led_state::LedState;
+pub use super::led_state::LedState;
 use crate::debugfs::config::Hardware;
 
 pub const DEV_ID: u64 = 0x40017;
-
 pub const MIC_LED: Hardware<LedState> = Hardware::new(DEV_ID);
 
 #[test]
