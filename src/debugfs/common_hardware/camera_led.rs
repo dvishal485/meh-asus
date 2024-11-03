@@ -17,7 +17,7 @@ pub enum CameraLedState {
     On = 1,
 }
 impl TryFrom<u64> for CameraLedState {
-    type Error = HardwareError<CameraLedState>;
+    type Error = HardwareError;
 
     fn try_from(value: u64) -> Result<Self, Self::Error> {
         match value {
