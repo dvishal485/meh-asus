@@ -21,7 +21,7 @@ where
     State: Config,
 {
     /// Create a new Hardware instance with the given `dev_id`.
-    /// 
+    ///
     /// It is just a wrapper to store value and its corresponding
     /// allowed states. Doesn't open the hardware config files.
     pub fn new(dev_id: u64) -> Self {
@@ -32,7 +32,7 @@ where
     }
 
     /// Open the hardware config files.
-    /// 
+    ///
     /// Used for making affect to any changes to the hardware by reading the hardware file.
     fn open(&self) -> Result<(), HardwareError<State>> {
         fs::write(path!("dev_id"), self.dev_id.to_string())
@@ -42,7 +42,7 @@ where
     }
 
     /// Applies the given state to the hardware.
-    /// 
+    ///
     /// Literally calls unsafe `apply_any` with the given state.
     /// But its okay, because function is not really unsafe, and
     /// usage of State ensures that the value is valid as long as
@@ -52,7 +52,7 @@ where
     }
 
     /// Applies the given config to the hardware.
-    /// 
+    ///
     /// **Usecase:** Directly write a u64 value to the config file.
     ///
     /// Not really unsafe, but we can have a "safer" alternative as
@@ -68,8 +68,82 @@ where
         Ok(())
     }
 
+    /// Read the current state of the hardware. **(Reliable)**
+    ///
+    /// Reads the currect state by overwriting config file to understand the current state.
+    /// Hence it effectively reads, writes and reads again the DSTS file to determine the state.
+    ///
+    /// The accuracy comes at cost of performance, as it writes to the config file. There is a proper
+    /// way to read the state without writing to the config file and can be done by obtaining the
+    /// mask generated using maps given in the
+    /// [asus-wmi driver code](https://github.com/torvalds/linux/blob/3e5e6c9900c3d71895e8bdeacfb579462e98eba1/include/linux/platform_data/x86/asus-wmi.h#L150-L158).
+    ///
+    /// Relates to [read_stale](Hardware::read_stale) function which is not reliable.
+    pub fn read(&self) -> Result<State, HardwareError<State>> {
+        todo!()
+    }
+
+    /// Read the raw value of the hardware config. This value is the actual state of the hardware,
+    /// but cannot be directly mapped to the State enum without obtaining the default mask.
+    ///
+    /// Applies a basic check to ensure the config read is for the expected hardware dev_id.
+    ///
+    /// Refer to [read](Hardware::read) which uses [this method](Hardware::read_dsts) to read and map to the state.
+    ///
+    /// **Usecase:** If you want to read the raw value of the hardware config, and then map it to the state yourself.
+    pub fn read_dsts(&self) -> Result<u64, HardwareError<State>> {
+        self.open()?;
+        
+        let config = fs::read_to_string(path!("dsts"))
+            .map_err(|e| HardwareError::DstsFileStateReadFailed { error: e })?;
+
+        let (inferred_dev_id, value) = config
+            .split_once('=')
+            .ok_or_else(|| HardwareError::UnexpectedConfigDstsFormat {
+                value: config.to_owned(),
+                hardware: *self,
+            })
+            .map(|(dev_id_part, value_part)| {
+                (
+                    {
+                        dev_id_part
+                            .split_once(')')
+                            .and_then(|(dev_id_part, _)| dev_id_part.split_once('('))
+                            .and_then(|(_, dev_id)| {
+                                dev_id
+                                    .trim()
+                                    .strip_prefix("0x")
+                                    .and_then(|d| u64::from_str_radix(d, 16).ok())
+                            })
+                    },
+                    {
+                        let value_part = value_part.trim();
+                        let value_part =
+                            value_part.strip_prefix("0x").or(Some(value_part)).unwrap();
+                        u64::from_str_radix(value_part, 16).map_err(|e| {
+                            HardwareError::<State>::InvalidHexadecimalValue {
+                                value: value_part.to_string(),
+                                error: e,
+                            }
+                        })
+                    },
+                )
+            })?;
+
+        if let Some(inferred_dev_id) = inferred_dev_id {
+            if inferred_dev_id != self.dev_id {
+                return Err(HardwareError::UnexpectedConfigDstsFormat  {
+                    value: config,
+                    hardware: *self,
+                });
+            }
+        }
+
+        value
+    }
+
     /// Read the current state of the hardware. **(NOT RELIABALE)**
-    /// 
+    ///
     /// This function is not reliable, as it reports any value that is present in the config file.
     /// It may not be the actual state of the hardware.
     ///
@@ -80,7 +154,7 @@ where
     /// Now switch fan to performance mode, and read the camera_led state, it will report the fan
     /// state instead, which may or may not even correspond to a valid state of camera_led. Even
     /// if the camera_led state is valid, it is not the actual state of the camera_led.
-    /// 
+    ///
     /// [DSTS can be used to read the currect state accurately.](https://github.com/torvalds/linux/blob/3e5e6c9900c3d71895e8bdeacfb579462e98eba1/include/linux/platform_data/x86/asus-wmi.h#L150-L158)
     pub fn read_stale(&self) -> Result<Result<State, State>, HardwareError<State>> {
         self.open()?;

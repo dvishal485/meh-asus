@@ -1,5 +1,4 @@
 use std::num::ParseIntError;
-
 use thiserror::Error;
 
 use super::{config::Hardware, config_trait::Config};
@@ -24,9 +23,20 @@ where
         hardware: Hardware<State>,
     },
 
+
     #[error("The given string `{value}` cannot be interpreted as hexadecimal value! {error}")]
     InvalidHexadecimalValue { value: String, error: ParseIntError },
 
     #[error("The state value `{value}` is not listed as a possible state for the hardware!")]
     NotPossibleState { value: u64 },
+
+    #[error("Failed to read the currect config file! {error}")]
+    DstsFileStateReadFailed { error: std::io::Error },
+
+
+    #[error("Cannot read the config due to unexpected format!\nExpected: `DSTS({}) = {{some_value}}\nFound: {value}", hardware.dev_id)]
+    UnexpectedConfigDstsFormat {
+        value: String,
+        hardware: Hardware<State>,
+    },
 }
