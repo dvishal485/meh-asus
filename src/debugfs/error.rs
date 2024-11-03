@@ -7,7 +7,7 @@ use super::{config::Hardware, config_trait::Config};
 #[derive(Debug, Error)]
 pub enum HardwareError<State>
 where
-    State: Config + Copy,
+    State: Config,
 {
     #[error("Failed to write dev_id! {error}")]
     DevIdWriteFailed { error: std::io::Error },

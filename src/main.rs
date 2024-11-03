@@ -7,30 +7,22 @@ use debugfs::common_hardware::fan::{FAN,FanMode};
 fn main() {
     let camera_led = CAMERA_LED;
 
-    let value = camera_led.read();
-    println!("{:?}\n", value);
-
     camera_led.apply(CameraLedState::On).unwrap();
 
-    let value = camera_led.read();
+    let value = camera_led.read_stale();
     println!("{:?}\n", value);
 
     sleep(Duration::from_secs(5));
 
     camera_led.apply(CameraLedState::Off).unwrap();
 
-    let value = camera_led.read();
+    let value = camera_led.read_stale();
     println!("{:?}\n", value);
 
     let fan = FAN ;
 
-    let value = fan.read();
-    println!("{:?}\n", value);
-
-    sleep(Duration::from_secs(5));
-
     fan.apply(FanMode::Performace).unwrap();
 
-    let value = fan.read();
+    let value = fan.read_stale();
     println!("{:?}\n", value);
 }

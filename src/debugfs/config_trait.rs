@@ -1,4 +1,6 @@
-pub trait Config: TryFrom<u64> {
+use std::fmt::Debug;
+
+pub trait Config: TryFrom<u64> + Debug + Copy  {
     fn to_config(&self) -> String;
 }
 
