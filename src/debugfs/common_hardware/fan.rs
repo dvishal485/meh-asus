@@ -1,4 +1,4 @@
-use crate::debugfs::{config::Hardware, config_trait::Config, error::HardwareError};
+use crate::debugfs::{config::Hardware, Config, error::HardwareError};
 
 pub const DEV_ID: u64 = 0x110019;
 
@@ -34,7 +34,7 @@ impl Config for FanMode {
 }
 
 #[test]
-fn test_fan_modes() {
+fn fan_modes() {
     use std::thread::sleep;
     use std::time::Duration;
 

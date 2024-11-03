@@ -1,4 +1,4 @@
-use super::{config_trait::Config, error::HardwareError};
+use super::{Config, error::HardwareError};
 use std::{cell::Cell, fs, marker::PhantomData};
 
 #[derive(Debug, Clone)]

@@ -1,11 +1,12 @@
+// ASUS_WMI_DEVID_CAMERA_LED
 pub use super::led_state::LedState;
 use crate::debugfs::config::Hardware;
 
-pub const DEV_ID: u64 = 0x60079;
+pub const DEV_ID: u64 = 0x00060079;
 pub const CAMERA_LED: Hardware<LedState> = Hardware::new(DEV_ID);
 
 #[test]
-fn test_camera_led() {
+fn camera_led() {
     use libc::geteuid;
     
     let camera_led = CAMERA_LED;

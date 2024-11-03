@@ -1,4 +1,4 @@
-use crate::debugfs::{config_trait::Config, error::HardwareError};
+use crate::debugfs::{Config, error::HardwareError};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

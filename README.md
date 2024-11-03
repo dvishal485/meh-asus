@@ -38,7 +38,7 @@ sudo chmod 4005 ./target/release/examples/toggle_fan_mode
 - You laptop may not support some of the tests execution, this way you get to know about what crate in-built hardware features you can use.
 
 ```bash
-sudo cargo test -- --test-threads=1
+sudo cargo test --no-fail-fast -- --test-threads=1
 ```
 
 ---
