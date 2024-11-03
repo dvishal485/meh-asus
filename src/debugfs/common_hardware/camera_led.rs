@@ -1,30 +1,37 @@
-use crate::debugfs::{config::Hardware, config_trait::Config, error::HardwareError};
+use super::led_state::LedState;
+use crate::debugfs::config::Hardware;
 
 pub const DEV_ID: u64 = 0x60079;
 
-pub const CAMERA_LED: Hardware<CameraLedState> = Hardware::new(DEV_ID);
+pub const CAMERA_LED: Hardware<LedState> = Hardware::new(DEV_ID);
 
-#[derive(Debug, Clone, Copy)]
-#[repr(u8)]
-pub enum CameraLedState {
-    Off = 0,
-    On = 1,
-}
+#[test]
+fn test_camera_led() {
+    let camera_led = CAMERA_LED;
+    use libc::geteuid;
 
-impl TryFrom<u64> for CameraLedState {
-    type Error = HardwareError;
-
-    fn try_from(value: u64) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(CameraLedState::Off),
-            1 => Ok(CameraLedState::On),
-            _ => Err(HardwareError::NotPossibleState { value }),
-        }
+    if unsafe { geteuid() } != 0 {
+        panic!("This test must be run as root");
     }
-}
 
-impl Config for CameraLedState {
-    fn to_config(&self) -> String {
-        (*self as u8).to_string()
-    }
+    let initial_state = camera_led
+        .read()
+        .expect("there should be a current state of camera led");
+
+    // turn on led
+    camera_led
+        .apply(LedState::On)
+        .expect("camera led should be turned on");
+    assert_eq!(camera_led.read().unwrap(), LedState::On);
+
+    // turn off led
+    camera_led
+        .apply(LedState::Off)
+        .expect("camera led should be turned off");
+    assert_eq!(camera_led.read().unwrap(), LedState::Off);
+
+    // return to initial state
+    camera_led
+        .apply(initial_state)
+        .expect("camera led should be switched to initial state");
 }

@@ -31,3 +31,14 @@ sudo chmod 4005 ./target/release/examples/toggle_fan_mode
 3. Run script from shell or set key binding in keyboard shortcut (say <kbd>Meta</kbd>+<kbd>;</kbd>)
 
 ---
+
+## Running tests
+
+- Use single thread, since all the configurations are essentially using file modification techniques, hence parallel execution might fail.
+- You laptop may not support some of the tests execution, this way you get to know about what crate in-built hardware features you can use.
+
+```bash
+sudo cargo test -- --test-threads=1
+```
+
+---

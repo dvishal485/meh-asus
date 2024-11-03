@@ -1,5 +1,5 @@
 use anyhow::{Context, Error};
-use meh_asus::debugfs::common_hardware::camera_led::{CameraLedState, CAMERA_LED};
+use meh_asus::debugfs::common_hardware::{camera_led::CAMERA_LED, led_state::LedState};
 use notify_rust::Notification;
 
 fn is_superuser() -> bool {
@@ -26,7 +26,7 @@ fn main() -> Result<(), Error> {
     let curr_state = camera_led.read()?;
 
     match curr_state {
-        CameraLedState::On => {
+        LedState::On => {
             let output = std::process::Command::new("modprobe")
                 .arg(CAMERA_MODULE)
                 .output()
@@ -34,17 +34,17 @@ fn main() -> Result<(), Error> {
 
             if output.status.success() {
                 println!("Camera module {} has been enabled", CAMERA_MODULE,);
-                camera_led.apply(CameraLedState::Off)?;
+                camera_led.apply(LedState::Off)?;
             } else {
                 eprintln!(
                     "Failed to enable camera module {}:\n{}",
                     CAMERA_MODULE,
                     String::from_utf8_lossy(&output.stderr)
                 );
-                camera_led.apply(CameraLedState::Off)?;
+                camera_led.apply(LedState::Off)?;
             }
         }
-        CameraLedState::Off => {
+        LedState::Off => {
             let output = std::process::Command::new("rmmod")
                 .arg("-f")
                 .arg(CAMERA_MODULE)
@@ -53,14 +53,14 @@ fn main() -> Result<(), Error> {
 
             if output.status.success() {
                 println!("Camera module {} has been disabled", CAMERA_MODULE);
-                camera_led.apply(CameraLedState::On)?;
+                camera_led.apply(LedState::On)?;
             } else {
                 eprintln!(
                     "Failed to disable camera module {}:\n{}",
                     CAMERA_MODULE,
                     String::from_utf8_lossy(&output.stderr),
                 );
-                camera_led.apply(CameraLedState::Off)?;
+                camera_led.apply(LedState::Off)?;
             }
         }
     }

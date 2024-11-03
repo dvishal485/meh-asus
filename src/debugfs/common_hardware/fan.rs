@@ -4,7 +4,7 @@ pub const DEV_ID: u64 = 0x110019;
 
 pub const FAN: Hardware<FanMode> = Hardware::new(DEV_ID);
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum FanMode {
     Standard = 0,
