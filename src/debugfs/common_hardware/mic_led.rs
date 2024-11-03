@@ -1,6 +1,6 @@
 // ASUS_WMI_DEVID_MICMUTE_LED
 pub use super::led_state::LedState;
-use crate::debugfs::config::Hardware;
+use crate::debugfs::Hardware;
 
 pub const DEV_ID: u64 = 0x00040017;
 pub const MIC_LED: Hardware<LedState> = Hardware::new(DEV_ID);

@@ -1,4 +1,4 @@
-use crate::debugfs::{config::Hardware, Config, error::HardwareError};
+use crate::debugfs::{Hardware, Config, error::HardwareError};
 
 pub const DEV_ID: u64 = 0x110019;
 
