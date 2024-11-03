@@ -33,4 +33,10 @@ fn test_camera_led() {
     camera_led
         .apply(initial_state)
         .expect("camera led should be switched to initial state");
+
+    assert_eq!(
+        camera_led.read().unwrap(),
+        initial_state,
+        "Failed to revert to initial state"
+    );
 }
