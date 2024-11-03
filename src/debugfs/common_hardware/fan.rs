@@ -32,3 +32,32 @@ impl Config for FanMode {
         (*self as u8).to_string()
     }
 }
+
+#[test]
+fn test_fan_modes() {
+    use std::thread::sleep;
+    use std::time::Duration;
+
+    let fan = FAN;
+
+    let initial_state = fan.read().expect("there should be a current state of fan");
+
+    // set fan to standard mode
+    fan.apply(FanMode::Standard)
+        .expect("fan should be set to standard mode");
+
+    assert_eq!(fan.read().unwrap(), FanMode::Standard);
+
+    // sleep for 2 seconds
+    sleep(Duration::from_secs(2));
+
+    // restore initial fan mode
+    fan.apply(initial_state)
+        .expect("fan should be switched to initial state");
+
+    assert_eq!(
+        fan.read().unwrap(),
+        initial_state,
+        "Failed to revert to initial state"
+    );
+}

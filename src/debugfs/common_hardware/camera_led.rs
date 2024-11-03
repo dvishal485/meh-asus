@@ -6,8 +6,9 @@ pub const CAMERA_LED: Hardware<LedState> = Hardware::new(DEV_ID);
 
 #[test]
 fn test_camera_led() {
-    let camera_led = CAMERA_LED;
     use libc::geteuid;
+    
+    let camera_led = CAMERA_LED;
 
     if unsafe { geteuid() } != 0 {
         panic!("This test must be run as root");

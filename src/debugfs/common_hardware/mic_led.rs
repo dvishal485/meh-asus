@@ -6,8 +6,8 @@ pub const MIC_LED: Hardware<LedState> = Hardware::new(DEV_ID);
 
 #[test]
 fn test_mic_led() {
-    let mic_led = MIC_LED;
     use libc::geteuid;
+    let mic_led = MIC_LED;
 
     if unsafe { geteuid() } != 0 {
         panic!("This test must be run as root");
