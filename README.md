@@ -12,10 +12,18 @@ Refer https://wiki.archlinux.org/title/Fan_speed_control#ASUS_laptops
 
 ---
 
-## Usage of toggle_fan_mode / camera_modprobe
+## Usage of examples given
 
+- speed_change: Make you fan go from Auto to Fullspeed for fun. (no debugfs)
 - toggle_fan_mode: Switches fan from Auto to FullSpeed and vice-versa.
 - camera_modprobe: Enable/Disable the camera and utilize the camera led to indicate its status.
+- kbd_brightness: Toggles brightness of keyboard blacklight.
+
+### Run as superuser
+
+With sudo: `sudo cargo r -r --example toggle_fan_mode`.
+
+### Run like a shell script / keyboard shortcut
 
 This is how `toggle_fan_mode` can be setup, `camera_modprobe` and other porgrams can be used in a similar fashion.
 
