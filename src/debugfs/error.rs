@@ -1,12 +1,8 @@
 use std::num::ParseIntError;
 use thiserror::Error;
 
-use super::{config::Hardware, config_trait::Config};
-
 #[derive(Debug, Error)]
-pub enum HardwareError<State>
-where
-    State: Config,
+pub enum HardwareError
 {
     #[error("Failed to write dev_id! {error}")]
     DevIdWriteFailed { error: std::io::Error },
@@ -17,10 +13,10 @@ where
     #[error("Failed to apply the given config! {error}")]
     ConfigApplyFailed { error: std::io::Error },
 
-    #[error("Cannot read the config due to unexpected format!\nExpected: `DEVS({}, {{some_value}}) = {{some_value}}\nFound: {value}", hardware.dev_id)]
+    #[error("Cannot read the config due to unexpected format!\nExpected: `DEVS({}, {{some_value}}) = {{some_value}}\nFound: {value}", dev_id)]
     UnexpectedConfigFormat {
         value: String,
-        hardware: Hardware<State>,
+        dev_id: u64,
     },
 
 
@@ -34,10 +30,10 @@ where
     DstsFileStateReadFailed { error: std::io::Error },
 
 
-    #[error("Cannot read the config due to unexpected format!\nExpected: `DSTS({}) = {{some_value}}\nFound: {value}", hardware.dev_id)]
+    #[error("Cannot read the config due to unexpected format!\nExpected: `DSTS({}) = {{some_value}}\nFound: {value}", dev_id)]
     UnexpectedConfigDstsFormat {
         value: String,
-        hardware: Hardware<State>,
+        dev_id: u64
     },
 
     #[error("Mask is not set. Cannot read the config without mask!\nYou might want to call `Hardware::read` first with mutable reference to self to set the mask.")]

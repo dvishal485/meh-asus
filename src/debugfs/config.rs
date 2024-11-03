@@ -1,7 +1,7 @@
 use super::{config_trait::Config, error::HardwareError};
 use std::{fs, marker::PhantomData};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Hardware<State>
 where
     State: Config,
@@ -36,7 +36,7 @@ where
     /// Open the hardware config files.
     ///
     /// Used for making affect to any changes to the hardware by reading the hardware file.
-    fn open(&self) -> Result<(), HardwareError<State>> {
+    fn open(&self) -> Result<(), HardwareError> {
         fs::write(path!("dev_id"), self.dev_id.to_string())
             .map_err(|error| HardwareError::DevIdWriteFailed { error })?;
 
@@ -49,7 +49,7 @@ where
     /// But its okay, because function is not really unsafe, and
     /// usage of State ensures that the value is valid as long as
     /// the State enum is implemented correctly.
-    pub fn apply(&self, ctrl_param: State) -> Result<(), HardwareError<State>> {
+    pub fn apply(&self, ctrl_param: State) -> Result<(), HardwareError> {
         unsafe { self.apply_any(ctrl_param) }
     }
 
@@ -59,7 +59,7 @@ where
     ///
     /// Not really unsafe, but we can have a "safer" alternative as
     /// Enum, so marking this as unsafe to demote its usage.
-    pub unsafe fn apply_any(&self, ctrl_param: impl Config) -> Result<(), HardwareError<State>> {
+    pub unsafe fn apply_any(&self, ctrl_param: impl Config) -> Result<(), HardwareError> {
         self.open()?;
 
         fs::write(path!("ctrl_param"), ctrl_param.to_config())
@@ -80,7 +80,7 @@ where
     /// [asus-wmi driver code](https://github.com/torvalds/linux/blob/3e5e6c9900c3d71895e8bdeacfb579462e98eba1/include/linux/platform_data/x86/asus-wmi.h#L150-L158).
     ///
     /// Relates to [read_stale](Hardware::read_stale) function which is not reliable.
-    pub fn read(&mut self) -> Result<State, HardwareError<State>> {
+    pub fn read(&mut self) -> Result<State, HardwareError> {
         let current_raw_state = self.read_dsts()?;
 
         let mask = if let Some(mask) = self.safe_read_mask {
@@ -104,20 +104,18 @@ where
     }
 
     /// Read the mask set for the hardware. **(Reliable)**
-    /// 
+    ///
     /// This is not really required, but yet supplied for cases when mutable reference cannot be shared but mask is already set.
     /// This method can be removed overall by use of RefCell or Cell, but it will hinder with the Copy trait. (derive macro)
     ///
     /// Takes read only reference to the hardware, can only be used after the first read with [Hardware::read](Hardware::read).
-    pub fn read_ref(&self) -> Result<State, HardwareError<State>> {
+    pub fn read_ref(&self) -> Result<State, HardwareError> {
         self.safe_read_mask
-            .ok_or(HardwareError::<State>::UsedWithoutMaskSet)
+            .ok_or(HardwareError::UsedWithoutMaskSet)
             .and_then(|mask| {
                 self.read_dsts().and_then(|raw| {
                     let s = raw ^ mask;
-                    State::try_from(s).map_err(|_| HardwareError::NotPossibleState {
-                        value: s,
-                    })
+                    State::try_from(s).map_err(|_| HardwareError::NotPossibleState { value: s })
                 })
             })
     }
@@ -130,7 +128,7 @@ where
     /// Refer to [read](Hardware::read) which uses [this method](Hardware::read_dsts) to read and map to the state.
     ///
     /// **Usecase:** If you want to read the raw value of the hardware config, and then map it to the state yourself.
-    pub fn read_dsts(&self) -> Result<u64, HardwareError<State>> {
+    pub fn read_dsts(&self) -> Result<u64, HardwareError> {
         self.open()?;
 
         let config = fs::read_to_string(path!("dsts"))
@@ -140,7 +138,7 @@ where
             .split_once('=')
             .ok_or_else(|| HardwareError::UnexpectedConfigDstsFormat {
                 value: config.to_owned(),
-                hardware: *self,
+                dev_id: self.dev_id,
             })
             .map(|(dev_id_part, value_part)| {
                 (
@@ -160,7 +158,7 @@ where
                         let value_part =
                             value_part.strip_prefix("0x").or(Some(value_part)).unwrap();
                         u64::from_str_radix(value_part, 16).map_err(|e| {
-                            HardwareError::<State>::InvalidHexadecimalValue {
+                            HardwareError::InvalidHexadecimalValue {
                                 value: value_part.to_string(),
                                 error: e,
                             }
@@ -173,7 +171,7 @@ where
             if inferred_dev_id != self.dev_id {
                 return Err(HardwareError::UnexpectedConfigDstsFormat {
                     value: config,
-                    hardware: *self,
+                    dev_id: self.dev_id,
                 });
             }
         }
@@ -197,7 +195,7 @@ where
     /// if the camera_led state is valid, it is not the actual state of the camera_led.
     ///
     /// [DSTS can be used to read the currect state accurately.](https://github.com/torvalds/linux/blob/3e5e6c9900c3d71895e8bdeacfb579462e98eba1/include/linux/platform_data/x86/asus-wmi.h#L150-L158)
-    pub fn read_stale(&self) -> Result<Result<State, State>, HardwareError<State>> {
+    pub fn read_stale(&self) -> Result<Result<State, State>, HardwareError> {
         self.open()?;
 
         let devs = fs::read_to_string(path!("devs"))
@@ -228,7 +226,7 @@ where
             })
             .ok_or(HardwareError::UnexpectedConfigFormat {
                 value: devs.to_string(),
-                hardware: *self,
+                dev_id: self.dev_id,
             })?;
 
         // optionally verify the dev_id, if it is present.
@@ -243,7 +241,7 @@ where
             if inferred_dev_id != self.dev_id {
                 return Err(HardwareError::UnexpectedConfigFormat {
                     value: devs.to_string(),
-                    hardware: *self,
+                    dev_id: self.dev_id,
                 });
             }
             Ok(value)
