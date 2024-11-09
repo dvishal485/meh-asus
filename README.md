@@ -1,6 +1,6 @@
-# meh-asus fan control
+# meh-asus
 
-Abstraction over fan mode to control it programatically. Basically to switch fan modes on my asus laptop (linux) just like I can do natively on Windows.
+Abstraction over ASUS hardware configurations to control it programatically on Linux.
 
 ---
 
@@ -37,6 +37,14 @@ sudo chmod 4005 ./target/release/examples/toggle_fan_mode
 ```
 
 3. Run script from shell or set key binding in keyboard shortcut (say <kbd>Meta</kbd>+<kbd>;</kbd>)
+
+4. One would also like to enable notification for the changes. For notifications, make sure `libnotify` and `xargs` is installed on your system, and use the following command
+
+```bash
+/PATH/TO/BINARY/debugfs_fan_mode 2>&1 | xargs -I {} notify-send -a "meh-asus" "Fan Mode Switch" "{}"
+```
+
+This is example command using fan_mode toggle (with debugfs).
 
 ---
 
