@@ -34,8 +34,8 @@ pub trait PwmHardware<T: PwmEnableState> {
     /// # Arguments
     ///
     /// * `path` - is the path to the pwm_enable device control file directory, 
-    /// it is generally not required to use this function directly, use
-    /// [find_and_get](PwmHardware::find_and_get) or [get](PwmHardware::get) functions instead
+    ///   it is generally not required to use this function directly, use
+    ///   [find_and_get](PwmHardware::find_and_get) or [get](PwmHardware::get) functions instead
     ///
     /// * `pwm_id` is the pwm id of the pwm device (example: `0` for `pwm0_enable`)
     fn new(path: std::ffi::OsString, pwm_id: u8) -> Result<Self, PwmEnableError>
