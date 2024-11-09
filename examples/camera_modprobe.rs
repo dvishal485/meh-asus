@@ -1,27 +1,10 @@
 use anyhow::{Context, Error};
-use meh_asus::debugfs::common_hardware::{camera_led::CAMERA_LED, led_state::LedState};
-use notify_rust::Notification;
+use meh_asus::common_hardware::{camera_led::CAMERA_LED, led_state::LedState};
 
-fn is_superuser() -> bool {
-    unsafe { libc::geteuid() == 0 }
-}
 
 const CAMERA_MODULE: &str = "uvcvideo";
 
 fn main() -> Result<(), Error> {
-    if !is_superuser() {
-        eprintln!("This program must be run as root");
-
-        Notification::new()
-            .appname("Asus Camera Module")
-            .summary("Camera module switch failed")
-            .body("This program must be run as root for the camera module to be enabled/disabled")
-            .show()
-            .context("Failed to show notification")?;
-
-        return Ok(());
-    }
-
     let camera_led = CAMERA_LED;
     let curr_state = camera_led.read()?;
 

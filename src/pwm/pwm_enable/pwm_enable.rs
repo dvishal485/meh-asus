@@ -3,7 +3,7 @@ use super::{
     error::{FanModeReadError, FanModeSetError, InputReadError, LabelReadError, PwmEnableError},
     traits::{PwmEnableState, PwmHardware, ReadConfig, WriteConfig},
 };
-use crate::fan::AsusNbWmiFanMode;
+use crate::pwm::fan::AsusNbWmiFanMode;
 use std::{
     ffi::OsString, fs::File, io::Read, marker::PhantomData, os::unix::fs::FileExt, path::Path,
 };

@@ -1,4 +1,4 @@
-use crate::fan::AsusNbWmiFanMode;
+use crate::pwm::fan::AsusNbWmiFanMode;
 
 use super::{
     error::{FanModeReadError, FanModeSetError, InputReadError, LabelReadError, PwmEnableError},

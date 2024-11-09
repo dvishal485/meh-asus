@@ -1,15 +1,9 @@
 use anyhow::{Context, Error};
-use libc;
-use meh_asus::fan::AsusNbWmiFanMode;
-use meh_asus::pwm_enable::error::{FanModeReadError, InputReadError, LabelReadError};
-use meh_asus::pwm_enable::traits::{PwmEnableState, PwmHardware, ReadConfig, WriteConfig};
-use meh_asus::pwm_enable::{PwmEnable, PwmEnableReadOnly, PwmEnableReadWrite};
-use notify_rust::Notification;
+use meh_asus::pwm::fan::AsusNbWmiFanMode;
+use meh_asus::pwm::pwm_enable::error::{FanModeReadError, InputReadError, LabelReadError};
+use meh_asus::pwm::pwm_enable::traits::{PwmEnableState, PwmHardware, ReadConfig, WriteConfig};
+use meh_asus::pwm::pwm_enable::{PwmEnable, PwmEnableReadOnly, PwmEnableReadWrite};
 use thiserror::Error;
-
-fn is_superuser() -> bool {
-    unsafe { libc::geteuid() == 0 }
-}
 
 #[derive(Debug)]
 struct FanConfiguration {
@@ -59,34 +53,16 @@ where
 }
 
 fn main() -> Result<(), Error> {
-    if !is_superuser() {
-        let fan1: PwmEnable<PwmEnableReadOnly> = PwmEnable::find_and_get(1)
-            .context("fan1 hardware not found or failed to read config")?;
-        let fan2: PwmEnable<PwmEnableReadOnly> = PwmEnable::find_and_get(2)
-            .context("fan2 hardware not found or failed to read config")?;
-
-        let fan1_config = get_config(&fan1).context("Error reading fan1 config")?;
-        let fan2_config = get_config(&fan2).context("Error reading fan2 config")?;
-
-        let message = format!(
-            "{}\n{}\nPlease run this program as root to control the fans.",
-            fan1_config, fan2_config
-        );
-
-        eprintln!("{}", message);
-
-        Notification::new()
-            .appname("ASUS Fan Control")
-            .summary("Fan control error")
-            .body(&message)
-            .show()
-            .context("Notification could not be delivered")?;
-    } else {
-        let mut fan1: PwmEnable<PwmEnableReadWrite> = PwmEnable::find_and_get(1)
+    let fans: Result<(PwmEnable<PwmEnableReadWrite>, PwmEnable<PwmEnableReadWrite>), ()> = {
+        let fan1: PwmEnable<PwmEnableReadWrite> = PwmEnable::find_and_get(1)
             .context("fan1 hardware not found or failed to open config")?;
-        let mut fan2: PwmEnable<PwmEnableReadWrite> = PwmEnable::find_and_get(2)
+        let fan2: PwmEnable<PwmEnableReadWrite> = PwmEnable::find_and_get(2)
             .context("fan2 hardware not found or failed to open config")?;
 
+        Ok((fan1, fan2))
+    };
+
+    if let Ok((mut fan1, mut fan2)) = fans {
         let fan1_config = get_config(&fan1).expect("Error reading fan1 config");
 
         // lets sync both fans to same mode
@@ -103,8 +79,22 @@ fn main() -> Result<(), Error> {
         println!(
             "Switched fan mode to next settings\n{}\n{}",
             fan1_config, fan2_config
-        )
+        );
+    } else {
+        let fan1: PwmEnable<PwmEnableReadOnly> = PwmEnable::find_and_get(1)
+            .context("fan1 hardware not found or failed to read config")?;
+        let fan2: PwmEnable<PwmEnableReadOnly> = PwmEnable::find_and_get(2)
+            .context("fan2 hardware not found or failed to read config")?;
+
+        let fan1_config = get_config(&fan1).context("Error reading fan1 config")?;
+        let fan2_config = get_config(&fan2).context("Error reading fan2 config")?;
+
+        eprintln!(
+            "{}\n{}\nFailed to open fan hardware as read-write.\nPlease run this program as root to control the fans.",
+            fan1_config, fan2_config
+        );
     }
+
     Ok(())
 }
 

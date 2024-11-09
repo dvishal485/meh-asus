@@ -4,13 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-thiserror = "1.0.67"
+thiserror = "2.0.1"
 
 [dev-dependencies]
-anyhow = "1.0.92"
-libc = { version = "0.2.161" }
-notify-rust = { version = "4.11.3" }
-
+anyhow = "1.0.93"
+libc = { version = "0.2.161" } # only for tests
 
 [features]
 default = ["common-hardware"]

@@ -1,7 +1,7 @@
 use meh_asus::create_kbd_brightness_enum;
-use meh_asus::debugfs::common_hardware::kbd_blacklight::DEV_ID as KBD_DEV_ID;
-use meh_asus::debugfs::Hardware;
-use meh_asus::debugfs::{error::HardwareError, Config};
+use meh_asus::common_hardware::kbd_blacklight::DEV_ID as KBD_DEV_ID;
+use meh_asus::Hardware;
+use meh_asus::{error::HardwareError, Config};
 
 fn main() -> Result<(), HardwareError> {
     create_kbd_brightness_enum!(State, Off = 0, Low = 1, Medium = 2, High = 3);

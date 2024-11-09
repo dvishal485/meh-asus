@@ -1,5 +1,5 @@
-use meh_asus::debugfs::common_hardware::fan::{FanMode, FAN};
-use meh_asus::debugfs::error::HardwareError;
+use meh_asus::common_hardware::fan::{FanMode, FAN};
+use meh_asus::error::HardwareError;
 
 fn main() -> Result<(), HardwareError> {
     let next_fan_mode = match FAN.read()? {

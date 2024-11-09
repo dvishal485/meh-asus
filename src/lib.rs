@@ -1,3 +1,3 @@
-pub mod fan;
-pub mod pwm_enable;
-pub mod debugfs;
+pub mod pwm;
+mod debugfs;
+pub use debugfs::*;
