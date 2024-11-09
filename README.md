@@ -2,13 +2,19 @@
 
 Abstraction over ASUS hardware configurations to control it programatically on Linux.
 
+This can utilize any hardware's DEV_ID, to read and modify its configuration as defined by the user.
+
+You can find the DEV_ID of the hardware you're interested in [ASUS WMI source code](https://github.com/torvalds/linux/blob/master/drivers/platform/x86/asus-wmi.c).
+
+
 ---
 
-This is meant only for Asus laptops, there are more fan configuration and files which can be used to handle the fan, but I didn't need them.
+## Common Hardware
 
-Not all asus laptops are supported. I mean they are, if you create mapping yourself, the majority of code remains same, only file names and the byte mapping to fan mode changes. My laptop only had the `pwm1_enable` and `pwm2_enable` (cpu and gpu fans), so I didn't program for other possible fans (only `pwm{id}_enable` in general).
+Some of the hardware dev id and their states are defined by default, serving as an example as well as direct abstraction over them.
 
-Refer https://wiki.archlinux.org/title/Fan_speed_control#ASUS_laptops
+> [!NOTE]
+> Users can refer to them to use it themselves, or to create abstraction over some other hardware component of their choice. Also look at [examples](#usage-of-examples-given).
 
 ---
 
@@ -56,5 +62,23 @@ This is example command using fan_mode toggle (with debugfs).
 ```bash
 sudo cargo test --no-fail-fast -- --test-threads=1
 ```
+
+---
+
+## Note on Fan control
+
+### debugfs (default)
+
+Windows doesn't allow you to switch to fan modes such as `FullSpeed` when you are not connected to AC power. This module doesn't impose any such restriction, although the configuration may be rejected by the hardware itself (passing an error message), but you should still be careful yourself to handle such scenerio, else you may end up harming you laptop's battery life.
+
+### pwm mode
+
+There are more fan configuration and files which can be used to handle the fan, but I didn't need them.
+
+Not all asus laptops are supported. I mean they are, if you create mapping yourself, the majority of code remains same, only file names and the byte mapping to fan mode changes. My laptop only had the `pwm1_enable` and `pwm2_enable` (cpu and gpu fans), so I didn't program for other possible fans (only `pwm{id}_enable` in general).
+
+Refer https://wiki.archlinux.org/title/Fan_speed_control#ASUS_laptops
+
+I would advise to use the debugfs abstraction over this, this is more of "manual" configuration.
 
 ---
