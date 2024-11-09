@@ -139,7 +139,7 @@ where
                     {
                         let value_part = value_part.trim();
                         let value_part =
-                            value_part.strip_prefix("0x").or(Some(value_part)).unwrap();
+                            value_part.strip_prefix("0x").unwrap_or(value_part);
                         u64::from_str_radix(value_part, 16).map_err(|e| {
                             HardwareError::InvalidHexadecimalValue {
                                 value: value_part.to_string(),
@@ -196,7 +196,7 @@ where
                             .and_then(|d| u64::from_str_radix(d, 16).ok()),
                         {
                             let value = value.trim().strip_suffix(')').unwrap();
-                            let value = value.strip_prefix("0x").or(Some(value)).unwrap();
+                            let value = value.strip_prefix("0x").unwrap_or(value);
                             u64::from_str_radix(value, 16).map_err(|e| {
                                 HardwareError::InvalidHexadecimalValue {
                                     value: value.to_string(),

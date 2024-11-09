@@ -3,14 +3,15 @@ pub use super::led_state::LedState;
 use crate::debugfs::Hardware;
 
 pub const DEV_ID: u64 = 0x00060079;
-pub const CAMERA_LED: Hardware<LedState> = Hardware::new(DEV_ID);
+pub const fn get() -> Hardware<LedState> {
+    Hardware::new(DEV_ID)
+}
 
 #[test]
 fn camera_led() {
     use libc::geteuid;
+    let camera_led = get();
     
-    let camera_led = CAMERA_LED;
-
     if unsafe { geteuid() } != 0 {
         panic!("This test must be run as root");
     }

@@ -2,7 +2,9 @@ use crate::debugfs::{Hardware, Config, error::HardwareError};
 
 pub const DEV_ID: u64 = 0x110019;
 
-pub const FAN: Hardware<FanMode> = Hardware::new(DEV_ID);
+pub const fn get() -> Hardware<FanMode> {
+    Hardware::new(DEV_ID)
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -38,7 +40,7 @@ fn fan_modes() {
     use std::thread::sleep;
     use std::time::Duration;
 
-    let fan = FAN;
+    let fan = get();
 
     let initial_state = fan.read().expect("there should be a current state of fan");
 

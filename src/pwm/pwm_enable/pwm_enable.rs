@@ -52,7 +52,7 @@ impl<T: PwmEnableState> PwmHardware<T> for PwmEnable<T> {
 
 impl<T: PwmEnableState> PwmEnable<T> {
     pub fn find_hwmon_path(pwm_id: u8) -> Result<OsString, PwmEnableError> {
-        let path = Path::new(BASE_PATH.into());
+        let path = Path::new(BASE_PATH);
 
         (0..=9_u8)
             .map(|hwmon_id| path.join(format!("hwmon{hwmon_id}/pwm{pwm_id}_enable")))
@@ -146,13 +146,13 @@ impl WriteConfig for PwmEnable<PwmEnableReadWrite> {
         let raw_err = e.raw_os_error();
 
         let Some(err) = raw_err else {
-            return Err(FanModeSetError::UnknownError { error: e.into() });
+            return Err(FanModeSetError::UnknownError { error: e });
         };
 
         Err(match err {
             22 => FanModeSetError::IllegalFanModeValue { value: mode },
-            5 => FanModeSetError::AcPowerRequired { error: e.into() },
-            _ => FanModeSetError::UnknownError { error: e.into() },
+            5 => FanModeSetError::AcPowerRequired { error: e },
+            _ => FanModeSetError::UnknownError { error: e },
         })
     }
 }

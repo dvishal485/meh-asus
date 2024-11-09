@@ -28,7 +28,7 @@ impl TryFrom<u8> for AsusNbWmiFanMode {
     type Error = AsusNbWmiFanModeError;
 
     fn try_from(value: u8) -> Result<AsusNbWmiFanMode, AsusNbWmiFanModeError> {
-        if value < b'0' || value > b'9' {
+        if !value.is_ascii_digit() {
             Err(AsusNbWmiFanModeError::NonNumericByte { value })
         } else {
             match value {

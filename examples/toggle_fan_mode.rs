@@ -42,13 +42,13 @@ where
         pwm_id: x.get_pwm_id(),
         label: x
             .get_label()
-            .map_err(|e| FanConfigurationError::LabelReadError(e))?,
+            .map_err(FanConfigurationError::LabelReadError)?,
         input: x
             .get_input()
-            .map_err(|e| FanConfigurationError::InputReadError(e))?,
+            .map_err(FanConfigurationError::InputReadError)?,
         mode: x
             .get_fan_mode()
-            .map_err(|e| FanConfigurationError::FanModeReadError(e))?,
+            .map_err(FanConfigurationError::FanModeReadError)?,
     })
 }
 

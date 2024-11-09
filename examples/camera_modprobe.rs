@@ -1,11 +1,10 @@
 use anyhow::{Context, Error};
-use meh_asus::common_hardware::{camera_led::CAMERA_LED, led_state::LedState};
-
+use meh_asus::common_hardware::{camera_led, led_state::LedState};
 
 const CAMERA_MODULE: &str = "uvcvideo";
 
 fn main() -> Result<(), Error> {
-    let camera_led = CAMERA_LED;
+    let camera_led = camera_led::get();
     let curr_state = camera_led.read()?;
 
     match curr_state {
