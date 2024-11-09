@@ -4,6 +4,8 @@ pub const DEV_ID: u64 = 0x00050021;
 
 #[macro_export]
 /// Use this macro to create an enum for keyboard backlight
+/// 
+/// Macro should always start with an off state `Off = 0` and the rest of the states can be defined as needed.
 ///
 /// Example usage:
 ///
@@ -22,10 +24,11 @@ pub const DEV_ID: u64 = 0x00050021;
 /// }
 /// ```
 macro_rules! create_kbd_brightness_enum {
-    ($enum_name:ident, $($name:ident = $value:expr),*) => {
+    ($enum_name:ident, $off_state: ident = 0, $($name:ident = $value:expr),*) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         #[repr(u64)]
         pub enum $enum_name {
+            $off_state = 0,
             // https://github.com/torvalds/linux/blob/3e5e6c9900c3d71895e8bdeacfb579462e98eba1/drivers/platform/x86/asus-wmi.c#L1544-L1549
             $($name = 0x80 | (0x7F & $value)),*
         }
@@ -35,6 +38,7 @@ macro_rules! create_kbd_brightness_enum {
 
             fn try_from(value: u64) -> Result<Self, Self::Error> {
                 match value as u8 {
+                    0 => Ok($enum_name::$off_state),
                     $( $value => Ok($enum_name::$name), )*
                     _ => Err(HardwareError::NotPossibleState { value }),
                 }
