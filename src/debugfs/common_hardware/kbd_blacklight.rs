@@ -61,11 +61,6 @@ mod test {
         use crate::debugfs::{error::HardwareError, Config};
         use std::{thread::sleep, time::Duration};
 
-        use libc::geteuid;
-        if unsafe { geteuid() } != 0 {
-            panic!("This test must be run as root");
-        }
-
         create_kbd_brightness_enum!(KbdBrightness, Off = 0, Low = 1, Medium = 2, High = 3);
 
         let kbd_backlight = Hardware::new(DEV_ID);

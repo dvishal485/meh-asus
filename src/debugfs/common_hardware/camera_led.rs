@@ -9,12 +9,7 @@ pub const fn get() -> Hardware<LedState> {
 
 #[test]
 fn camera_led() {
-    use libc::geteuid;
     let camera_led = get();
-    
-    if unsafe { geteuid() } != 0 {
-        panic!("This test must be run as root");
-    }
 
     let initial_state = camera_led
         .read()

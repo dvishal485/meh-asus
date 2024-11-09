@@ -7,8 +7,7 @@ edition = "2021"
 thiserror = "2.0.1"
 
 [dev-dependencies]
-anyhow = "1.0.93"
-libc = { version = "0.2.161" } # only for tests
+anyhow = "1.0.93" # examples and test
 
 [features]
 default = ["common-hardware"]
