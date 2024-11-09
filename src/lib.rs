@@ -5,5 +5,5 @@ pub mod pwm;
 
 #[cfg(not(feature = "pwm"))]
 mod debugfs;
-#[cfg(not(feature = "pwm"))]
+
 pub use debugfs::*;
