@@ -24,16 +24,16 @@ impl std::fmt::Display for FanConfiguration {
 }
 
 #[derive(Debug, Error)]
-enum FanConfigurationError {
+enum FanConfigurationReadError {
     #[error("{0}")]
-    LabelReadError(LabelReadError),
+    Label(LabelReadError),
     #[error("{0}")]
-    InputReadError(InputReadError),
+    Input(InputReadError),
     #[error("{0}")]
-    FanModeReadError(FanModeReadError),
+    FanMode(FanModeReadError),
 }
 
-fn get_config<X, T>(x: &T) -> Result<FanConfiguration, FanConfigurationError>
+fn get_config<X, T>(x: &T) -> Result<FanConfiguration, FanConfigurationReadError>
 where
     T: PwmHardware<X> + ReadConfig,
     X: PwmEnableState,
@@ -42,13 +42,13 @@ where
         pwm_id: x.get_pwm_id(),
         label: x
             .get_label()
-            .map_err(FanConfigurationError::LabelReadError)?,
+            .map_err(FanConfigurationReadError::Label)?,
         input: x
             .get_input()
-            .map_err(FanConfigurationError::InputReadError)?,
+            .map_err(FanConfigurationReadError::Input)?,
         mode: x
             .get_fan_mode()
-            .map_err(FanConfigurationError::FanModeReadError)?,
+            .map_err(FanConfigurationReadError::FanMode)?,
     })
 }
 

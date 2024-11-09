@@ -12,4 +12,9 @@ libc = { version = "0.2.161" } # only for tests
 
 [features]
 default = ["common-hardware"]
+
+# abstraction over common hardware like keyboard blacklight, camera led etc.
 common-hardware = []
+
+# manual pwm mode of controlling laptop fans
+pwm = []

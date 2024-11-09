@@ -16,12 +16,10 @@ pub const DEV_ID: u64 = 0x00050021;
 /// use meh_asus::Hardware;
 /// use meh_asus::{error::HardwareError, Config};
 ///
-/// fn main() {
-///     create_kbd_brightness_enum!(State, Off = 0, Low = 1, Medium = 2, High = 3);
+/// create_kbd_brightness_enum!(State, Off = 0, Low = 1, Medium = 2, High = 3);
 /// 
-///     let kbd_blight: Hardware<State> = Hardware::new(KBD_DEV_ID);
-///     kbd_blight.apply(State::Medium).unwrap();
-/// }
+/// let kbd_blight: Hardware<State> = Hardware::new(KBD_DEV_ID);
+/// kbd_blight.apply(State::Medium).unwrap();
 /// ```
 macro_rules! create_kbd_brightness_enum {
     ($enum_name:ident, $off_state: ident = 0, $($name:ident = $value:expr),*) => {

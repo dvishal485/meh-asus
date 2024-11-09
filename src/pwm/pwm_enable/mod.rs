@@ -1,6 +1,6 @@
 pub mod error;
-mod pwm_enable;
+mod logic;
 mod base_path;
 pub mod traits;
 
-pub use pwm_enable::{PwmEnable, PwmEnableReadOnly, PwmEnableReadWrite};
+pub use logic::{PwmEnable, PwmEnableReadOnly, PwmEnableReadWrite};

@@ -57,8 +57,12 @@ where
     ///
     /// **Usecase:** Directly write a u64 value to the config file.
     ///
+    ///  # Safety
+    /// 
     /// Not really unsafe, but we can have a "safer" alternative as
     /// Enum, so marking this as unsafe to demote its usage.
+    /// 
+    /// Ensure that the value you are writing is valid for the hardware.
     pub unsafe fn apply_any(&self, ctrl_param: impl Config) -> Result<(), HardwareError> {
         self.open()?;
 
