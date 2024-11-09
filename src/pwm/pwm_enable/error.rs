@@ -31,10 +31,7 @@ pub enum InputReadError {
 pub enum FanModeReadError {
     #[error("{error}")]
     AsusNbWmiFanModeError { error: AsusNbWmiFanModeError },
-
-    // #[error("Label couldn't be accessed! {error}")]
-    // LabelIncompatible { error: std::io::Error },
-
+    
     #[error("Error occured while reading the label! {error}")]
     IOReadError { error: std::io::Error },
 }

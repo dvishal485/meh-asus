@@ -8,36 +8,39 @@ use std::{
     ffi::OsString, fs::File, io::Read, marker::PhantomData, os::unix::fs::FileExt, path::Path,
 };
 
+/// PWM enable state representation for controlling the pwm_enable hardware.
 pub struct PwmEnableReadWrite;
+/// PWM enable state representation for reading the pwm_enable hardware.
 pub struct PwmEnableReadOnly;
 
+/// PWM enable representation for controlling the pwm_enable hardware.
 pub struct PwmEnable<T: PwmEnableState> {
     pub(crate) file: File,
     pub(crate) path: OsString,
-    pub(crate) pwmid: u8,
+    pub(crate) pwm_id: u8,
     pub(crate) _state: PhantomData<T>,
 }
 
 impl<T: PwmEnableState> PwmHardware<T> for PwmEnable<T> {
-    fn new(path: OsString, pwmid: u8) -> Result<Self, PwmEnableError> {
+    fn new(path: OsString, pwm_id: u8) -> Result<Self, PwmEnableError> {
         let file = File::options()
             .read(true)
             .write(T::write_permission())
             .open(Path::new(&path))
             .map_err(|e| PwmEnableError::UnableToAccessHardware {
-                pwm_id: pwmid,
+                pwm_id,
                 error: e,
             })?;
         Ok(PwmEnable {
             file,
             path,
-            pwmid,
+            pwm_id,
             _state: PhantomData,
         })
     }
     
     fn get_pwm_id(&self) -> u8 {
-        self.pwmid
+        self.pwm_id
     }
     
     fn get_file_path(&self) -> &OsString {
@@ -51,6 +54,7 @@ impl<T: PwmEnableState> PwmHardware<T> for PwmEnable<T> {
 }
 
 impl<T: PwmEnableState> PwmEnable<T> {
+    /// Find the path of the hardware for the given PWM ID.
     pub fn find_hwmon_path(pwm_id: u8) -> Result<OsString, PwmEnableError> {
         let path = Path::new(BASE_PATH);
 
@@ -76,7 +80,7 @@ impl<T: PwmEnableState> ReadConfig for PwmEnable<T> {
 
     fn get_label(&self) -> Result<String, LabelReadError> {
         let path = Path::new(&self.path);
-        let label_path = path.with_file_name(format!("fan{}_label", self.pwmid));
+        let label_path = path.with_file_name(format!("fan{}_label", self.pwm_id));
 
         let mut file = File::options()
             .read(true)
@@ -97,7 +101,7 @@ impl<T: PwmEnableState> ReadConfig for PwmEnable<T> {
 
     fn get_input(&self) -> Result<u16, InputReadError> {
         let path = Path::new(&self.path);
-        let input_path = path.with_file_name(format!("fan{}_input", self.pwmid));
+        let input_path = path.with_file_name(format!("fan{}_input", self.pwm_id));
 
         let mut file = File::options()
             .read(true)
@@ -131,7 +135,7 @@ impl PwmEnable<PwmEnableReadOnly> {
         Ok(PwmEnable {
             file,
             path: self.path,
-            pwmid: self.pwmid,
+            pwm_id: self.pwm_id,
             _state: PhantomData,
         })
     }
