@@ -17,3 +17,11 @@ common-hardware = []
 
 # manual pwm mode of controlling laptop fans
 pwm = []
+
+[[example]]
+name = "toggle_fan_mode"
+required-features = ["pwm"]
+
+[[example]]
+name = "speed_change"
+required-features = ["pwm"]
