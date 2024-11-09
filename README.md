@@ -44,20 +44,23 @@ sudo chmod 4005 ./target/release/examples/toggle_fan_mode
 
 3. Run script from shell or set key binding in keyboard shortcut (say <kbd>Meta</kbd>+<kbd>;</kbd>)
 
-4. One would also like to enable notification for the changes. For notifications, make sure `libnotify` and `xargs` is installed on your system, and use the following command
-
-```bash
-/PATH/TO/BINARY/debugfs_fan_mode 2>&1 | xargs -I {} notify-send -a "meh-asus" "Fan Mode Switch" "{}"
-```
-
-This is example command using fan_mode toggle (with debugfs).
+> [!TIP]
+> One would also like to enable notification for the changes. For notifications, make sure `libnotify` and `xargs` is installed on your system, and use the following command
+> 
+> ```bash
+> /PATH/TO/BINARY/debugfs_fan_mode 2>&1 | xargs -I {} notify-send -a "meh-asus" "Fan Mode Switch" "{}"
+> ```
+>
+> This is example command using fan_mode toggle (with debugfs).
 
 ---
 
 ## Running tests
 
-- Use single thread, since all the configurations are essentially using file modification techniques, hence parallel execution might fail.
-- You laptop may not support some of the tests execution, this way you get to know about what crate in-built hardware features you can use.
+> [!IMPORTANT]
+> Use single thread, since all the configurations are essentially using file modification techniques, hence parallel execution might fail.
+
+Your laptop may not support some of the tests execution, this way you get to know about what crate in-built hardware features you can use.
 
 ```bash
 sudo cargo test --no-fail-fast -- --test-threads=1

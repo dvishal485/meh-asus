@@ -2,6 +2,17 @@
 name = "meh-asus"
 version = "0.1.0"
 edition = "2021"
+authors = ["Vishal Das"]
+description = "Abstraction over ASUS hardware configurations to control it programatically on Linux."
+license = "MIT"
+keywords = [
+    "asus",
+    "asus-fan",
+    "asusctl",
+    "asusd",
+    "asus-mod",
+    "asus-fan-control",
+]
 
 [dependencies]
 thiserror = "2.0.1"
