@@ -1,6 +1,6 @@
 [package]
 name = "meh-asus"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Vishal Das"]
 description = "Abstraction over ASUS hardware configurations to control it programatically on Linux."
@@ -14,7 +14,7 @@ keywords = [
 ]
 
 [dependencies]
-thiserror = "2.0.1"
+thiserror = "2.0.3"
 
 [dev-dependencies]
 anyhow = "1.0.93" # examples and test
