@@ -1,6 +1,10 @@
-use super::{Config, error::HardwareError};
+//! Hardware abstraction to control the hardware configurations.
+
+use super::{error::*, Config};
 use std::{cell::Cell, fs, marker::PhantomData};
 
+/// Provides a safe interface to control the hardware configurations
+/// initialized with the valid state configuration enum of the hardware.
 #[derive(Debug, Clone)]
 pub struct Hardware<State>
 where
@@ -36,16 +40,16 @@ where
     /// Open the hardware config files.
     ///
     /// Used for making affect to any changes to the hardware by reading the hardware file.
-    fn open(&self) -> Result<(), HardwareError> {
+    fn open(&self) -> Result<(), DevIdFileError> {
         fs::write(path!("dev_id"), self.dev_id.to_string())
-            .map_err(|error| HardwareError::DevIdWriteFailed { error })?;
+            .map_err(|error| DevIdFileError::WriteFailed { error })?;
 
         Ok(())
     }
 
     /// Applies the given state to the hardware.
     ///
-    /// Literally calls unsafe `apply_any` with the given state.
+    /// Literally calls unsafe [apply_any](Hardware::apply_any) with the given state.
     /// But its okay, because function is not really unsafe, and
     /// usage of State ensures that the value is valid as long as
     /// the State enum is implemented correctly.
@@ -58,18 +62,21 @@ where
     /// **Usecase:** Directly write a u64 value to the config file.
     ///
     ///  # Safety
-    /// 
+    ///
     /// Not really unsafe, but we can have a "safer" alternative as
-    /// Enum, so marking this as unsafe to demote its usage.
-    /// 
-    /// Ensure that the value you are writing is valid for the hardware.
+    /// a state enum, marking it a valid state ensuring type safety.
+    ///
+    /// So marking this as unsafe to demote its usage.
+    ///
+    /// If still using this method, ensure that the value you are
+    /// writing is valid for the hardware.
     pub unsafe fn apply_any(&self, ctrl_param: impl Config) -> Result<(), HardwareError> {
         self.open()?;
 
         fs::write(path!("ctrl_param"), ctrl_param.to_config())
-            .map_err(|e| HardwareError::CtrlParamWriteFailed { error: e })?;
+            .map_err(|e| CtrlParamError::WriteFailed { error: e })?;
 
-        fs::read(path!("devs")).map_err(|e| HardwareError::ConfigApplyFailed { error: e })?;
+        fs::read(path!("devs")).map_err(|e| ConfigApplyError::ConfigApplyFailed { error: e })?;
 
         Ok(())
     }
@@ -102,8 +109,11 @@ where
 
         let current_state_u8 = current_raw_state ^ mask;
 
-        State::try_from(current_state_u8).map_err(|_| HardwareError::NotPossibleState {
-            value: current_state_u8,
+        State::try_from(current_state_u8).map_err(|_| {
+            StateError::NotPossibleState {
+                value: current_state_u8,
+            }
+            .into()
         })
     }
 
@@ -119,11 +129,11 @@ where
         self.open()?;
 
         let config = fs::read_to_string(path!("dsts"))
-            .map_err(|e| HardwareError::DstsFileStateReadFailed { error: e })?;
+            .map_err(|e| DstsConfigFileError::StateReadFailed { error: e })?;
 
         let (inferred_dev_id, value) = config
             .split_once('=')
-            .ok_or_else(|| HardwareError::UnexpectedConfigDstsFormat {
+            .ok_or_else(|| DstsConfigFileError::UnexpectedConfigFormat {
                 value: config.to_owned(),
                 dev_id: self.dev_id,
             })
@@ -142,13 +152,13 @@ where
                     },
                     {
                         let value_part = value_part.trim();
-                        let value_part =
-                            value_part.strip_prefix("0x").unwrap_or(value_part);
+                        let value_part = value_part.strip_prefix("0x").unwrap_or(value_part);
                         u64::from_str_radix(value_part, 16).map_err(|e| {
-                            HardwareError::InvalidHexadecimalValue {
+                            DstsConfigFileError::InvalidHexadecimalValue {
                                 value: value_part.to_string(),
                                 error: e,
                             }
+                            .into()
                         })
                     },
                 )
@@ -156,10 +166,11 @@ where
 
         if let Some(inferred_dev_id) = inferred_dev_id {
             if inferred_dev_id != self.dev_id {
-                return Err(HardwareError::UnexpectedConfigDstsFormat {
+                return Err(DstsConfigFileError::UnexpectedConfigFormat {
                     value: config,
                     dev_id: self.dev_id,
-                });
+                }
+                .into());
             }
         }
 
@@ -186,7 +197,7 @@ where
         self.open()?;
 
         let devs = fs::read_to_string(path!("devs"))
-            .map_err(|e| HardwareError::ConfigApplyFailed { error: e })?;
+            .map_err(|e| ConfigApplyError::ConfigApplyFailed { error: e })?;
 
         let (inferred_dev_id, value) = devs
             .trim_end()
@@ -202,7 +213,7 @@ where
                             let value = value.trim().strip_suffix(')').unwrap();
                             let value = value.strip_prefix("0x").unwrap_or(value);
                             u64::from_str_radix(value, 16).map_err(|e| {
-                                HardwareError::InvalidHexadecimalValue {
+                                DevsConfigFileError::InvalidHexadecimalValue {
                                     value: value.to_string(),
                                     error: e,
                                 }
@@ -211,7 +222,7 @@ where
                     )
                 })
             })
-            .ok_or(HardwareError::UnexpectedConfigFormat {
+            .ok_or(DevsConfigFileError::UnexpectedConfigFormat {
                 value: devs.to_string(),
                 dev_id: self.dev_id,
             })?;
@@ -220,16 +231,17 @@ where
         // if no dev_id is inferred, we can only pray to god that it is the correct value.
         let original_read_value = value?;
         let value =
-            State::try_from(original_read_value).map_err(|_| HardwareError::NotPossibleState {
+            State::try_from(original_read_value).map_err(|_| StateError::NotPossibleState {
                 value: original_read_value,
             })?;
 
         Ok(if let Some(inferred_dev_id) = inferred_dev_id {
             if inferred_dev_id != self.dev_id {
-                return Err(HardwareError::UnexpectedConfigFormat {
+                return Err(DevsConfigFileError::UnexpectedConfigFormat {
                     value: devs.to_string(),
                     dev_id: self.dev_id,
-                });
+                }
+                .into());
             }
             Ok(value)
         } else {

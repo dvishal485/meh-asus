@@ -47,6 +47,5 @@ fn main() -> Result<(), Error> {
         }
     }
 
-    println!("Camera LED status: {:?}", camera_led.read());
     Ok(())
 }

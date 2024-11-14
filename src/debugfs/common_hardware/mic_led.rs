@@ -1,4 +1,7 @@
-// ASUS_WMI_DEVID_MICMUTE_LED
+//! ASUS_WMI_DEVID_MICMUTE_LED
+//! 
+//! Audio Button LED Key (F9 on most Asus Laptop)
+
 pub use super::led_state::LedState;
 use crate::debugfs::Hardware;
 

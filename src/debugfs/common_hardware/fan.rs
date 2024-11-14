@@ -1,4 +1,14 @@
-use crate::debugfs::{Hardware, Config, error::HardwareError};
+//! ASUS Laptop Fan modes similar to windows configuration of fan.
+//!
+//! On windows it if updated using <kbd>Fn</kbd> + <kbd>F</kbd> key.
+//!
+//! You can use this module to obtain similar functionality.
+//! Refer to README for usage.
+use crate::{
+    auto_impl_config,
+    debugfs::{Config, Hardware},
+    error::StateError,
+};
 
 pub const DEV_ID: u64 = 0x110019;
 
@@ -6,34 +16,14 @@ pub const fn get() -> Hardware<FanMode> {
     Hardware::new(DEV_ID)
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-pub enum FanMode {
+auto_impl_config!(
+    FanMode,
+    u8,
     Standard = 0,
     Whispher = 1,
     Performace = 2,
-    FullSpeed = 3,
-}
-
-impl TryFrom<u64> for FanMode {
-    type Error = HardwareError;
-
-    fn try_from(value: u64) -> Result<Self, Self::Error> {
-        match value as u8 {
-            0 => Ok(FanMode::Standard),
-            1 => Ok(FanMode::Whispher),
-            2 => Ok(FanMode::Performace),
-            3 => Ok(FanMode::FullSpeed),
-            _ => Err(HardwareError::NotPossibleState { value }),
-        }
-    }
-}
-
-impl Config for FanMode {
-    fn to_config(&self) -> String {
-        (*self as u8).to_string()
-    }
-}
+    FullSpeed = 3
+);
 
 #[test]
 fn fan_modes() {

@@ -1,4 +1,7 @@
-// ASUS_WMI_DEVID_CAMERA_LED
+//! ASUS_WMI_DEVID_CAMERA_LED
+//! 
+//! Camera Button LED Key (F10 on most Asus Laptop)
+
 pub use super::led_state::LedState;
 use crate::debugfs::Hardware;
 

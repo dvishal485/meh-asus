@@ -1,8 +1,10 @@
-// ASUS_WMI_DEVID_KBD_BACKLIGHT
+//! ASUS_WMI_DEVID_KBD_BACKLIGHT
+//! 
+//! Asus Keyboard blacklight control with a given number of blacklight mode settings
+//! using [create_kbd_brightness_enum](crate::create_kbd_brightness_enum) utility macro.
 
 pub const DEV_ID: u64 = 0x00050021;
 
-#[macro_export]
 /// Use this macro to create an enum for keyboard backlight
 /// 
 /// Macro should always start with an off state `Off = 0` and the rest of the states can be defined as needed.
@@ -14,13 +16,14 @@ pub const DEV_ID: u64 = 0x00050021;
 /// use meh_asus::create_kbd_brightness_enum;
 /// use meh_asus::common_hardware::kbd_blacklight::DEV_ID as KBD_DEV_ID;
 /// use meh_asus::Hardware;
-/// use meh_asus::{error::HardwareError, Config};
+/// use meh_asus::{error::StateError, Config};
 ///
-/// create_kbd_brightness_enum!(State, Off = 0, Low = 1, Medium = 2, High = 3);
+/// create_kbd_brightness_enum!(KbdState, Off = 0, Low = 1, Medium = 2, High = 3);
 /// 
-/// let kbd_blight: Hardware<State> = Hardware::new(KBD_DEV_ID);
-/// kbd_blight.apply(State::Medium).unwrap();
+/// let kbd_blight: Hardware<KbdState> = Hardware::new(KBD_DEV_ID);
+/// kbd_blight.apply(KbdState::Medium).unwrap();
 /// ```
+#[macro_export]
 macro_rules! create_kbd_brightness_enum {
     ($enum_name:ident, $off_state: ident = 0, $($name:ident = $value:expr),*) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -32,20 +35,20 @@ macro_rules! create_kbd_brightness_enum {
         }
 
         impl TryFrom<u64> for $enum_name {
-            type Error = HardwareError;
+            type Error = StateError;
 
             fn try_from(value: u64) -> Result<Self, Self::Error> {
-                match value as u8 {
+                match value {
                     0 => Ok($enum_name::$off_state),
                     $( $value => Ok($enum_name::$name), )*
-                    _ => Err(HardwareError::NotPossibleState { value }),
+                    _ => Err(StateError::NotPossibleState { value }),
                 }
             }
         }
 
         impl Config for $enum_name {
             fn to_config(&self) -> String {
-                (*self as u8).to_string()
+                (*self as u64).to_string()
             }
         }
     };
@@ -58,7 +61,7 @@ mod test {
         use crate::create_kbd_brightness_enum;
         use crate::debugfs::common_hardware::kbd_blacklight::DEV_ID;
         use crate::debugfs::Hardware;
-        use crate::debugfs::{error::HardwareError, Config};
+        use crate::debugfs::{error::StateError, Config};
         use std::{thread::sleep, time::Duration};
 
         create_kbd_brightness_enum!(KbdBrightness, Off = 0, Low = 1, Medium = 2, High = 3);
