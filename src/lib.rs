@@ -16,11 +16,7 @@
 #![cfg(target_os = "linux")]
 
 #[cfg(feature = "pwm")]
-pub mod debugfs;
-#[cfg(feature = "pwm")]
 pub mod pwm;
 
-#[cfg(not(feature = "pwm"))]
-mod debugfs;
-
+pub mod debugfs;
 pub use debugfs::*;
