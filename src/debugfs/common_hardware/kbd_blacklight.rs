@@ -1,12 +1,12 @@
 //! ASUS_WMI_DEVID_KBD_BACKLIGHT
-//! 
+//!
 //! Asus Keyboard blacklight control with a given number of blacklight mode settings
 //! using [create_kbd_brightness_enum](crate::create_kbd_brightness_enum) utility macro.
 
 pub const DEV_ID: u64 = 0x00050021;
 
 /// Use this macro to create an enum for keyboard backlight
-/// 
+///
 /// Macro should always start with an off state `Off = 0` and the rest of the states can be defined as needed.
 ///
 /// Example usage:
@@ -19,7 +19,7 @@ pub const DEV_ID: u64 = 0x00050021;
 /// use meh_asus::{error::StateError, Config};
 ///
 /// create_kbd_brightness_enum!(KbdState, Off = 0, Low = 1, Medium = 2, High = 3);
-/// 
+///
 /// let kbd_blight: Hardware<KbdState> = Hardware::new(KBD_DEV_ID);
 /// kbd_blight.apply(KbdState::Medium).unwrap();
 /// ```
@@ -68,64 +68,50 @@ mod test {
 
         let kbd_backlight = Hardware::new(DEV_ID);
 
+        macro_rules! kbd_set {
+            ($kbd_backlight: ident, $val: expr) => {
+                kbd_backlight
+                    .apply($val)
+                    .expect("keyboard backlight should be set");
+
+                let curr_state = $kbd_backlight.read();
+                println!("Set State: {curr_state:?}");
+                assert_eq!(curr_state.unwrap(), $val, "Expected config to be set");
+            };
+            ($val: expr) => {
+                kbd_set!(kbd_backlight, $val);
+            };
+        }
+
         let initial_state = kbd_backlight
             .read()
             .expect("there should be a current state of keyboard backlight");
 
-        // set keyboard backlight to low
-        kbd_backlight
-            .apply(KbdBrightness::Low)
-            .expect("keyboard backlight should be set to low");
+        println!("Initial state: {initial_state:?}");
 
-        assert_eq!(kbd_backlight.read().unwrap(), KbdBrightness::Low);
-
+        kbd_set!(KbdBrightness::Low);
         sleep(Duration::from_secs(2));
 
-        // set keyboard backlight to medium
-        kbd_backlight
-            .apply(KbdBrightness::Medium)
-            .expect("keyboard backlight should be set to medium");
-
-        assert_eq!(kbd_backlight.read().unwrap(), KbdBrightness::Medium);
-
+        kbd_set!(KbdBrightness::Medium);
         sleep(Duration::from_secs(2));
 
-        // set keyboard backlight to high
-        kbd_backlight
-            .apply(KbdBrightness::High)
-            .expect("keyboard backlight should be set to high");
-
-        assert_eq!(kbd_backlight.read().unwrap(), KbdBrightness::High);
-
+        kbd_set!(KbdBrightness::High);
         sleep(Duration::from_secs(2));
 
-        // set keyboard backlight to off
-        kbd_backlight
-            .apply(KbdBrightness::Off)
-            .expect("keyboard backlight should be turned off");
-
-        assert_eq!(kbd_backlight.read().unwrap(), KbdBrightness::Off);
-
+        kbd_set!(KbdBrightness::Off);
         sleep(Duration::from_secs(2));
 
-        // set keyboard backlight to high
-        kbd_backlight
-            .apply(KbdBrightness::High)
-            .expect("keyboard backlight should be set to high");
-
-        assert_eq!(kbd_backlight.read().unwrap(), KbdBrightness::High);
-
+        kbd_set!(KbdBrightness::Low);
         sleep(Duration::from_secs(2));
 
         // return to initial state
-        kbd_backlight
-            .apply(initial_state)
-            .expect("keyboard backlight should be switched to initial state");
+        kbd_set!(initial_state);
+        sleep(Duration::from_secs(2));
 
-        assert_eq!(
-            kbd_backlight.read().unwrap(),
-            initial_state,
-            "Failed to revert to initial state"
-        );
+        println!("Final state: {:?}", kbd_backlight.read());
+        sleep(Duration::from_secs(5));
+
+        assert_eq!(kbd_backlight.read().unwrap(), initial_state, "Initial state was not set!");
+        println!("Success");
     }
 }
