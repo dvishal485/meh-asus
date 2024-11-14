@@ -24,25 +24,26 @@ Some of the hardware dev id and their states are defined by default, serving as 
 ## Usage of examples given
 
 - speed_change: Make you fan go from Auto to Fullspeed for fun. (no debugfs)
-- toggle_fan_mode: Switches fan from Auto to FullSpeed and vice-versa.
+- toggle_fan_mode: Switches fan from Auto to FullSpeed and vice-versa. (no debugfs)
+- debugfs_fan_mode: Switches fan between Standard, Whispher, Performance, FullSpeed.
 - camera_modprobe: Enable/Disable the camera and utilize the camera led to indicate its status.
 - kbd_brightness: Toggles brightness of keyboard blacklight.
 
 ### Run as superuser
 
-With sudo: `sudo cargo r -r --example toggle_fan_mode`.
+With sudo: `sudo cargo r -r --example debugfs_fan_mode`.
 
 ### Run like a shell script / keyboard shortcut
 
-This is how `toggle_fan_mode` can be setup, `camera_modprobe` and other porgrams can be used in a similar fashion.
+This is how `debugfs_fan_mode` can be setup, `camera_modprobe` and other porgrams can be used in a similar fashion.
 
-1. Compile using cargo `cargo b -r --example toggle_fan_mode`
+1. Compile using cargo `cargo b -r --example debugfs_fan_mode`
 
 2. Give root level execution permission
 
 ```bash
-sudo chown root:root ./target/release/examples/toggle_fan_mode
-sudo chmod 4005 ./target/release/examples/toggle_fan_mode
+sudo chown root:root ./target/release/examples/debugfs_fan_mode
+sudo chmod 4005 ./target/release/examples/debugfs_fan_mode
 ```
 
 3. Run script from shell or set key binding in keyboard shortcut (say <kbd>Meta</kbd>+<kbd>;</kbd>)
@@ -53,8 +54,6 @@ sudo chmod 4005 ./target/release/examples/toggle_fan_mode
 > ```bash
 > /PATH/TO/BINARY/debugfs_fan_mode 2>&1 | xargs -I {} notify-send -a "meh-asus" "Fan Mode Switch" "{}"
 > ```
->
-> This is example command using fan_mode toggle (with debugfs).
 
 ---
 
