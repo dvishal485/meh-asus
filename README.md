@@ -1,5 +1,8 @@
 # meh-asus
 
+![Crates.io Version](https://img.shields.io/crates/v/meh_asus)
+![Crates.io Size](https://img.shields.io/crates/size/meh_asus)
+
 Abstraction over ASUS hardware configurations to control it programatically on Linux.
 
 This can utilize any hardware's DEV_ID, to read and modify its configuration as defined by the user.
@@ -63,7 +66,7 @@ sudo chmod 4005 ./target/release/examples/toggle_fan_mode
 Your laptop may not support some of the tests execution, this way you get to know about what crate in-built hardware features you can use.
 
 ```bash
-sudo cargo test --no-fail-fast -- --test-threads=1
+sudo cargo test --no-fail-fast -- --test-threads=1 --nocapture
 ```
 
 ---
