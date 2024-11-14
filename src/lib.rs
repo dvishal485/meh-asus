@@ -15,8 +15,9 @@
 
 #![cfg(target_os = "linux")]
 
-#[cfg(feature = "pwm")]
-pub mod pwm;
-
 pub mod debugfs;
-pub use debugfs::*;
+#[cfg(feature = "pwm")]
+#[cfg_attr(docsrs, doc(cfg(feature = "pwm")))]
+pub mod pwm;
+pub use debugfs::{common_hardware, error};
+pub use debugfs::{Config, Hardware};
