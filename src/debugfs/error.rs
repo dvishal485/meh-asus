@@ -50,7 +50,7 @@ pub enum ConfigApplyError {
 
 #[derive(Debug, Error)]
 pub enum DevsConfigFileError {
-    #[error("Cannot read the config due to unexpected format!\nExpected: `DEVS({}, {{some_value}}) = {{some_value}}\nFound: {value}", dev_id)]
+    #[error("Cannot read the config due to unexpected format!\nExpected: `DEVS({dev_id:#x}, {{some_value}}) = {{some_value}}\nFound: {value}")]
     UnexpectedConfigFormat { value: String, dev_id: u64 },
 
     #[error("The given string `{value}` cannot be interpreted as hexadecimal value! {error}")]
@@ -59,14 +59,14 @@ pub enum DevsConfigFileError {
 
 #[derive(Debug, Error)]
 pub enum StateError {
-    #[error("The state value `{value}` is not listed as a possible state for the hardware!\nPlease initialize the hardware with set of correct possible states, without this type safety cannot be guaranteed.")]
+    #[error("The state value `{value:#x}` is not listed as a possible state for the hardware!\nPlease initialize the hardware with set of correct possible states, without this type safety cannot be guaranteed.")]
     NotPossibleState { value: u64 },
 }
 
 
 #[derive(Debug, Error)]
 pub enum DstsConfigFileError {
-    #[error("Cannot read the config due to unexpected format!\nExpected: `DEVS({}, {{some_value}}) = {{some_value}}\nFound: {value}", dev_id)]
+    #[error("Cannot read the config due to unexpected format!\nExpected: `DEVS({dev_id:#x}, {{some_value}}) = {{some_value}}\nFound: {value}")]
     UnexpectedConfigFormat { value: String, dev_id: u64 },
 
     #[error("The given string `{value}` cannot be interpreted as hexadecimal value! {error}")]
