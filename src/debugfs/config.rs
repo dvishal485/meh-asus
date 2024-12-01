@@ -49,34 +49,44 @@ where
 
     /// Applies the given state to the hardware.
     ///
-    /// Literally calls unsafe [apply_any](Hardware::apply_any) with the given state.
-    /// But its okay, because function is not really unsafe, and
-    /// usage of State ensures that the value is valid as long as
-    /// the State enum is implemented correctly.
+    /// Refer [apply_any](Hardware::apply_any) to apply a state
+    /// not in declared in configuration's state enum.
     pub fn apply(&self, ctrl_param: State) -> Result<(), HardwareError> {
-        unsafe { self.apply_any(ctrl_param) }
+        self._apply_raw(ctrl_param)
     }
 
-    /// Applies the given config to the hardware.
+    /// Applies any arbitary given config to the hardware.
     ///
     /// **Usecase:** Directly write a u64 value to the config file.
     ///
-    ///  # Safety
+    /// Refer [apply](Hardware::apply) to apply a state declared in
+    /// configuration's state enum, hence ensuring type safety.
     ///
-    /// Not really unsafe, but we can have a "safer" alternative as
-    /// a state enum, marking it a valid state ensuring type safety.
+    /// # Safety
+    ///
+    /// Not really unsafe, but we can have a "safer" alternative
+    /// with [apply using declared state enum](Hardware::apply),
+    /// marking it a valid state ensuring type safety.
     ///
     /// So marking this as unsafe to demote its usage.
     ///
     /// If still using this method, ensure that the value you are
     /// writing is valid for the hardware.
     pub unsafe fn apply_any(&self, ctrl_param: impl Config) -> Result<(), HardwareError> {
+        self._apply_raw(ctrl_param)
+    }
+
+    /// Internal function serving as the base code of [apply](Hardware::apply) and [apply_any](Hardware::apply_any).
+    /// The function is safe to use depending upon its usage, as the configuration application operation doesn't usually fail even if invalid.
+    ///
+    /// Use [apply](Hardware::apply) with a well defined state enum to ensure safety.
+    fn _apply_raw(&self, ctrl_param: impl Config) -> Result<(), HardwareError> {
         self.open()?;
 
         fs::write(path!("ctrl_param"), ctrl_param.to_config())
             .map_err(|e| CtrlParamError::WriteFailed { error: e })?;
 
-        fs::read(path!("devs")).map_err(|e| ConfigApplyError::ConfigApplyFailed { error: e })?;
+        fs::read(path!("devs")).map_err(|error| ConfigApplyError::ConfigApplyFailed { error })?;
 
         Ok(())
     }
