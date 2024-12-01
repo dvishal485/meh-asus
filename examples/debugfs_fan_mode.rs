@@ -1,8 +1,8 @@
+use anyhow::Error;
 use fan::FanMode;
 use meh_asus::common_hardware::fan;
-use meh_asus::error::HardwareError;
 
-fn main() -> Result<(), HardwareError> {
+fn main() -> Result<(), Error> {
     let fan = fan::get();
     let next_fan_mode = match fan.read()? {
         FanMode::Whispher => FanMode::Standard,
